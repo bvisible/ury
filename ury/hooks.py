@@ -42,7 +42,7 @@ page_js = {"point-of-sale": ["public/js/pos_extend.js"]}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
 
 # Splash Image in Website Settings
-website_context = {"splash_image": "/assets/ury/Images/ury-logo.jpg"}
+# website_context = {"splash_image": "/assets/ury/Images/ury-logo.jpg"}
 
 website_route_rules = [
     {"from_route": "/pos/<path:app_path>", "to_route": "pos"},
