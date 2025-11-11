@@ -598,6 +598,55 @@ def posOpening():
 
 
 @frappe.whitelist()
+def create_pos_opening_entry(pos_profile, company, balance_details):
+    """
+    Create and submit POS Opening Entry inline
+    Similar to ERPNext's create_opening_voucher
+    """
+    import json
+
+    # Parse balance_details if it's a JSON string
+    if isinstance(balance_details, str):
+        balance_details = json.loads(balance_details)
+
+    # Validate required fields
+    if not balance_details or len(balance_details) == 0:
+        frappe.throw(_("Please add Mode of payments and opening balance details"))
+
+    # Filter out empty rows
+    balance_details = [
+        row for row in balance_details
+        if row.get("mode_of_payment") and row.get("opening_amount") is not None
+    ]
+
+    if not balance_details:
+        frappe.throw(_("Please add at least one payment method with an opening amount"))
+
+    # Get branch from user
+    branch = getBranch()
+
+    # Create POS Opening Entry
+    pos_opening = frappe.get_doc({
+        "doctype": "POS Opening Entry",
+        "period_start_date": frappe.utils.get_datetime(),
+        "posting_date": frappe.utils.getdate(),
+        "user": frappe.session.user,
+        "pos_profile": pos_profile,
+        "company": company,
+        "branch": branch,
+        "status": "Open"
+    })
+
+    # Set balance details
+    pos_opening.set("balance_details", balance_details)
+
+    # Submit the entry (docstatus=1)
+    pos_opening.submit()
+
+    return pos_opening.as_dict()
+
+
+@frappe.whitelist()
 def getAggregator():
     branchName = getBranch()
     aggregatorList = frappe.get_all(
