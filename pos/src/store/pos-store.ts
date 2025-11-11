@@ -622,10 +622,12 @@ export const usePOSStore = create<POSStore>((set, get) => ({
           orderId: order.name,
         });
       } else {
-        set({ 
+        // Don't clear selectedCustomer if already set (e.g., from POS Profile default)
+        const currentCustomer = get().selectedCustomer;
+        set({
           tableOrder: null,
           activeOrders: [],
-          selectedCustomer: null,
+          selectedCustomer: currentCustomer,
           isUpdatingOrder: false,
           orderId: null,
         });

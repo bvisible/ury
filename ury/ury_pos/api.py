@@ -586,7 +586,7 @@ def posOpening():
     pos_opening_list = frappe.get_all(
         "POS Opening Entry",
         fields=["name", "docstatus", "status", "posting_date"],
-        filters={"branch": branchName},
+        filters={"branch": branchName, "user": frappe.session.user},
     )
     flag = 1
     for pos_opening in pos_opening_list:
@@ -644,6 +644,98 @@ def create_pos_opening_entry(pos_profile, company, balance_details):
     pos_opening.submit()
 
     return pos_opening.as_dict()
+
+
+@frappe.whitelist()
+def get_closing_entry_preview(pos_opening_entry):
+    """
+    Get preview data for POS closing without creating the document
+    Returns payment reconciliation and sales summary
+    """
+    from erpnext.accounts.doctype.pos_closing_entry.pos_closing_entry import (
+        make_closing_entry_from_opening
+    )
+
+    # Get opening entry
+    opening_entry = frappe.get_doc("POS Opening Entry", pos_opening_entry)
+
+    # Validate opening entry is still open
+    if opening_entry.status != "Open":
+        frappe.throw(_("This POS session is already closed"))
+
+    # Create preview using ERPNext's function (doesn't save)
+    closing_preview = make_closing_entry_from_opening(opening_entry)
+
+    # Return summary data for the dialog
+    return {
+        "payment_reconciliation": [
+            {
+                "mode_of_payment": p.mode_of_payment,
+                "opening_amount": p.opening_amount or 0,
+                "expected_amount": p.expected_amount or 0,
+                "closing_amount": p.expected_amount or 0,  # Default to expected
+                "difference": 0
+            }
+            for p in closing_preview.payment_reconciliation
+        ],
+        "grand_total": closing_preview.grand_total or 0,
+        "net_total": closing_preview.net_total or 0,
+        "total_quantity": closing_preview.total_quantity or 0,
+        "invoice_count": len(closing_preview.pos_transactions)
+    }
+
+
+@frappe.whitelist()
+def create_pos_closing_entry(pos_opening_entry, payment_details):
+    """
+    Create and submit POS Closing Entry inline
+    Similar to create_pos_opening_entry
+    """
+    import json
+    from erpnext.accounts.doctype.pos_closing_entry.pos_closing_entry import (
+        make_closing_entry_from_opening
+    )
+
+    # Parse payment details if string
+    if isinstance(payment_details, str):
+        payment_details = json.loads(payment_details)
+
+    # Validate
+    if not payment_details or len(payment_details) == 0:
+        frappe.throw(_("Please enter closing amounts for all payment methods"))
+
+    # Get opening entry
+    opening_entry = frappe.get_doc("POS Opening Entry", pos_opening_entry)
+
+    # Validate opening entry is still open
+    if opening_entry.status != "Open":
+        frappe.throw(_("This POS session is already closed"))
+
+    # Validate user has permission to close
+    if opening_entry.user != frappe.session.user:
+        frappe.throw(_("You can only close your own POS session"))
+
+    # Use ERPNext's function to create base closing entry
+    closing_entry = make_closing_entry_from_opening(opening_entry)
+
+    # Update payment reconciliation with user-entered closing amounts
+    for payment_detail in payment_details:
+        mode_of_payment = payment_detail.get("mode_of_payment")
+        closing_amount = payment_detail.get("closing_amount")
+
+        for reconciliation in closing_entry.payment_reconciliation:
+            if reconciliation.mode_of_payment == mode_of_payment:
+                reconciliation.closing_amount = closing_amount or 0
+                reconciliation.difference = (
+                    (closing_amount or 0) - (reconciliation.expected_amount or 0)
+                )
+                break
+
+    # Insert and submit the closing entry
+    closing_entry.insert()
+    closing_entry.submit()
+
+    return closing_entry.as_dict()
 
 
 @frappe.whitelist()

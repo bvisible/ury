@@ -207,3 +207,25 @@ def restrict_existing_order(doc, event):
             frappe.throw(
                 ("Table {0} has an existing invoice").format(doc.restaurant_table)
             )
+
+
+def validate_pos_opening_for_user(doc, method):
+    """Validate that current user has an open POS Opening Entry"""
+    opening_entries = frappe.get_list(
+        "POS Opening Entry",
+        filters={
+            "pos_profile": doc.pos_profile,
+            "user": frappe.session.user,
+            "status": "Open",
+            "docstatus": 1
+        }
+    )
+
+    if len(opening_entries) == 0:
+        frappe.throw(
+            title=frappe._("POS Opening Entry Missing"),
+            msg=frappe._("No open POS Opening Entry found for user {0} with POS Profile {1}.").format(
+                frappe.bold(frappe.session.user),
+                frappe.bold(doc.pos_profile)
+            ),
+        )

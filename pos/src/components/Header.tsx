@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { 
+import {
   Command,
   User,
   ChevronDown,
   Monitor,
   LogOut,
   RefreshCw,
+  DoorClosed,
 } from 'lucide-react';
 import { Button, Input } from './ui';
 import { useRootStore } from '../store/root-store';
@@ -14,9 +15,13 @@ import { usePOSStore } from '../store/pos-store';
 import type { RootState } from '../store/root-store';
 import { logout } from '../lib/auth-api';
 import { showToast } from './ui/toast';
+import POSClosingFormDialog from './POSClosingFormDialog';
+import { getCurrentPOSOpening } from '../lib/pos-opening-api';
 
 const Header = () => {
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showClosingDialog, setShowClosingDialog] = useState(false);
+  const [posOpeningEntry, setPosOpeningEntry] = useState<string | null>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const user = useRootStore((state: RootState) => state.user);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -102,6 +107,31 @@ const Header = () => {
     window.location.reload();
   };
 
+  const handleClosePOS = async () => {
+    try {
+      // Get current POS opening entry
+      const opening = await getCurrentPOSOpening();
+      if (!opening) {
+        showToast.error('No POS session is currently open');
+        return;
+      }
+      setPosOpeningEntry(opening);
+      setShowClosingDialog(true);
+      setShowUserMenu(false);
+    } catch (error) {
+      showToast.error('Failed to load POS session');
+    }
+  };
+
+  const handleClosingSuccess = () => {
+    setShowClosingDialog(false);
+    showToast.success('POS closed successfully');
+    // Reload the page to reflect changes
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
+  };
+
   return (
     <header className="bg-white border-b border-gray-200">
       <div className="flex items-center justify-between h-16 px-6">
@@ -173,6 +203,14 @@ const Header = () => {
                   </Button>
                   <Button
                     variant="ghost"
+                    className="flex justify-start items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                    onClick={handleClosePOS}
+                  >
+                    <DoorClosed className="w-4 h-4 mr-3" />
+                    Close POS
+                  </Button>
+                  <Button
+                    variant="ghost"
                     className="flex justify-start items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors"
                     onClick={handleLogout}
                   >
@@ -185,6 +223,15 @@ const Header = () => {
           </div>
         </div>
       </div>
+
+      {/* POS Closing Dialog */}
+      {showClosingDialog && posOpeningEntry && (
+        <POSClosingFormDialog
+          posOpeningEntry={posOpeningEntry}
+          onSuccess={handleClosingSuccess}
+          onCancel={() => setShowClosingDialog(false)}
+        />
+      )}
     </header>
   );
 };

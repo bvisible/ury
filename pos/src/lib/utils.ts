@@ -8,5 +8,7 @@ export function cn(...inputs: ClassValue[]) {
 
 export function formatCurrency(amount: number): string {
   const symbol = storage.getItem('currencySymbol');
-  return `${symbol} ${amount}`;
+  // Round to 2 decimal places and format
+  const formatted = Number(amount).toFixed(2);
+  return `${symbol} ${formatted}`;
 } 

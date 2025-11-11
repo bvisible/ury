@@ -6,7 +6,7 @@ app_publisher = "Tridz Technologies Pvt. Ltd"
 app_description = "A Complete Restaurant Order Taking Software"
 app_email = "info@tridz.com"
 app_license = "MIT"
-app_logo_url = "/assets/ury/Images/ury-logo.jpg"
+#app_logo_url = "/assets/ury/Images/ury-logo.jpg"
 app_icon_title = "URY"
 required_apps = ["erpnext"]
 # Includes in <head>
@@ -120,7 +120,10 @@ website_route_rules = [
 doc_events = {
     "POS Invoice": {
         "before_insert": "ury.ury.hooks.ury_pos_invoice.before_insert",
-        "validate": "ury.ury.hooks.ury_pos_invoice.validate",
+        "validate": [
+            "ury.ury.hooks.ury_pos_invoice.validate",
+            "ury.ury.hooks.ury_pos_invoice.validate_pos_opening_for_user"
+        ],
         "after_insert":"ury.ury.api.ury_kot_order_number.set_order_number",
         "before_submit": "ury.ury.hooks.ury_pos_invoice.before_submit",
         "on_cancel": "ury.ury.hooks.ury_pos_invoice.on_trash",

@@ -31,16 +31,60 @@ export interface CreatePOSOpeningRequest {
   balance_details: BalanceDetail[];
 }
 
+export interface PaymentReconciliation {
+  mode_of_payment: string;
+  opening_amount: number;
+  expected_amount: number;
+  closing_amount: number;
+  difference: number;
+}
+
+export interface POSClosingPreview {
+  payment_reconciliation: PaymentReconciliation[];
+  grand_total: number;
+  net_total: number;
+  total_quantity: number;
+  invoice_count: number;
+}
+
+export interface CreatePOSClosingRequest {
+  pos_opening_entry: string;
+  payment_details: PaymentReconciliation[];
+}
+
 export const checkPOSOpening = async (): Promise<POSOpeningResponse> => {
   try {
     const response = await call.get<POSOpeningResponse>(
       'ury.ury_pos.api.posOpening'
     );
-    
+
     return response;
   } catch (error) {
     console.error('Error checking POS opening status:', error);
     throw error;
+  }
+};
+
+export const getCurrentPOSOpening = async (): Promise<string | null> => {
+  try {
+    // Get current user's open POS opening entry
+    const { db, call } = await import('./frappe-sdk');
+
+    // Get current user
+    const userResponse = await call.get('frappe.auth.get_logged_user');
+    const currentUser = userResponse.message;
+
+    const openings = await db.getDocList('POS Opening Entry', {
+      fields: ['name'],
+      filters: [['status', '=', 'Open'], ['docstatus', '=', 1], ['user', '=', currentUser]],
+      limit: 1,
+      orderBy: { field: 'creation', order: 'desc' }
+    });
+
+    return openings.length > 0 ? openings[0].name : null;
+  } catch (error) {
+    console.error('Error getting current POS opening:', error);
+    return null;
   }
 };
 
@@ -76,6 +120,43 @@ export const createPOSOpeningEntry = async (
     return response.message as POSOpeningEntry;
   } catch (error) {
     console.error('Error creating POS opening entry:', error);
+    throw error;
+  }
+};
+
+export const getPOSClosingPreview = async (
+  posOpeningEntry: string
+): Promise<POSClosingPreview> => {
+  try {
+    const response = await call.get<{message: POSClosingPreview}>(
+      'ury.ury_pos.api.get_closing_entry_preview',
+      {
+        pos_opening_entry: posOpeningEntry
+      }
+    );
+
+    return response.message;
+  } catch (error) {
+    console.error('Error getting POS closing preview:', error);
+    throw error;
+  }
+};
+
+export const createPOSClosingEntry = async (
+  data: CreatePOSClosingRequest
+): Promise<any> => {
+  try {
+    const response = await call.post(
+      'ury.ury_pos.api.create_pos_closing_entry',
+      {
+        pos_opening_entry: data.pos_opening_entry,
+        payment_details: JSON.stringify(data.payment_details)
+      }
+    );
+
+    return response.message;
+  } catch (error) {
+    console.error('Error creating POS closing entry:', error);
     throw error;
   }
 }; 
