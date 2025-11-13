@@ -127,18 +127,35 @@ export const createPaymentIntent = async (
   terminalId?: string
 ): Promise<PaymentIntentResponse> => {
   try {
-    const response = await call.post('neopay_integration.api.create_payment_intent', {
+    console.log('[createPaymentIntent] Called with params:', {
+      amount,
+      currency,
+      referenceDoctype,
+      referenceDocname,
+      description,
+      terminalId
+    });
+
+    const requestData = {
       terminal_id: terminalId || 'default',
       amount: amount * 100, // Convert to cents
       currency: currency.toLowerCase(),
       reference_doctype: referenceDoctype,
       reference_docname: referenceDocname,
       description: description || `Payment for ${referenceDocname}`
-    });
+    };
 
+    console.log('[createPaymentIntent] Request data:', requestData);
+    console.log('[createPaymentIntent] Making API call to neopay_integration.api.create_payment_intent');
+
+    const response = await call.post('neopay_integration.api.create_payment_intent', requestData);
+
+    console.log('[createPaymentIntent] API response:', response);
     return response.message;
   } catch (error) {
-    console.error('Failed to create payment intent:', error);
+    console.error('[createPaymentIntent] Error caught:', error);
+    console.error('[createPaymentIntent] Error type:', typeof error);
+    console.error('[createPaymentIntent] Error keys:', error ? Object.keys(error) : 'null');
     throw error;
   }
 };

@@ -66,7 +66,7 @@ export interface SyncOrderRequest {
     qty: number;
   }>;
   no_of_pax: number;
-  mode_of_payment?: string;
+  mode_of_payment: string; // Required by backend API
   cashier?: string;
   owner?: string;
   waiter?: string;

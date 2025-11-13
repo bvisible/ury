@@ -1,41 +1,16 @@
-import { useState, useEffect } from 'react';
-import ScreenSizeDialog from './ScreenSizeDialog';
+import { ReactNode } from 'react';
 
 interface ScreenSizeProviderProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
+/**
+ * ScreenSizeProvider - Previously blocked small screens, now allows all sizes
+ * Mobile support is now handled via responsive design in components
+ */
 const ScreenSizeProvider = ({ children }: ScreenSizeProviderProps) => {
-  const [isScreenTooSmall, setIsScreenTooSmall] = useState(false);
-
-  const checkScreenSize = () => {
-    const isSmall = window.innerWidth < 1024;
-    setIsScreenTooSmall(isSmall);
-  };
-
-  useEffect(() => {
-    // Check on mount
-    checkScreenSize();
-
-    // Add resize listener
-    const handleResize = () => {
-      checkScreenSize();
-    };
-
-    window.addEventListener('resize', handleResize);
-
-    // Cleanup
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, []);
-
-  // Show dialog if screen is too small
-  if (isScreenTooSmall) {
-    return <ScreenSizeDialog />;
-  }
-
-  // Render children if screen size is acceptable
+  // Mobile support is now enabled - no blocking dialog
+  // Responsive layout switching is handled by useMediaQuery hook in components
   return <>{children}</>;
 };
 

@@ -1,3 +1,8 @@
+/* Ensure toasts are always on top of everything including modals and overlays */
+.Toastify__toast-container {
+  z-index: 9999999 !important;
+}
+
 /* Override default toast styles for custom design */
 .Toastify__toast {
   border-radius: 8px !important;

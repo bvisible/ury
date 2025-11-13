@@ -135,3 +135,19 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Fix react-modal-sheet scroller to work with flexbox layout */
+.react-modal-sheet-content {
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: visible !important;
+}
+
+.react-modal-sheet-content-scroller {
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  flex: 1 !important;
+  overflow: visible !important;
+}

@@ -13,8 +13,13 @@ import { useNavigate } from 'react-router-dom';
 import PaymentDialog from '../components/PaymentDialog';
 import { printOrder } from '../lib/print';
 import { call } from '../lib/frappe-sdk';
+import { useIsMobile } from '../hooks/useMediaQuery';
+import { MobileOrders } from './mobile/MobileOrders';
 
 export default function Orders() {
+  const isMobile = useIsMobile();
+
+  // Always call all hooks before any conditional returns
   const { 
     orders,
     orderLoading,
@@ -198,6 +203,12 @@ export default function Orders() {
     );
   }
 
+  // Mobile Layout - return after all hooks are called
+  if (isMobile) {
+    return <MobileOrders />;
+  }
+
+  // Desktop Layout
   return (
     <div className="flex h-screen overflow-hidden">
       {/* Left Sidebar - Order Types */}

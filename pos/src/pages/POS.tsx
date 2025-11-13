@@ -9,8 +9,11 @@ import { usePOSStore } from '../store/pos-store';
 import { cn } from '../lib/utils';
 import { Spinner } from '../components/ui/spinner';
 import InitialLoader from '../components/InitialLoader';
+import { useIsMobile } from '../hooks/useMediaQuery';
+import { MobilePOSLayout } from '../components/mobile/MobilePOSLayout';
 
 export default function POS() {
+  const isMobile = useIsMobile();
   const {
     searchQuery,
     setSearchQuery,
@@ -89,7 +92,7 @@ export default function POS() {
         <div className="text-center">
           <p className="text-xl font-semibold text-red-600 mb-2">Failed to load POS</p>
           <p className="text-gray-600">{error}</p>
-          <button 
+          <button
             onClick={() => window.location.reload()}
             className="mt-4 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700"
           >
@@ -119,6 +122,17 @@ export default function POS() {
     );
   }
 
+  // Mobile Layout
+  if (isMobile) {
+    return (
+      <>
+        <MobilePOSLayout />
+        {isDialogOpen && <ProductDialog onClose={() => setIsDialogOpen(false)} />}
+      </>
+    );
+  }
+
+  // Desktop Layout (original)
   return (
     <div className="flex flex-1 overflow-hidden">
       <Sidebar disabled={isMenuInteractionDisabled()} />

@@ -123,7 +123,7 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
     : [];
 
   const [selectedAddons, setSelectedAddons] = useState<Array<{ id: string; name: string; price: number }>>([]);
-  const [quantity, setQuantity] = useState<string>(editMode ? initialQuantity?.toString() || '0' : '0');
+  const [quantity, setQuantity] = useState<string>(editMode && itemToReplace ? itemToReplace.quantity.toString() : '0');
   const [comments, setComments] = useState<string>(itemToReplace?.comment || existingCartItem?.comment || '');
   const dialogRef = useRef<HTMLDivElement>(null);
 
@@ -237,13 +237,16 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
   };
 
   const handleAddToOrder = () => {
+    console.error('[ProductDialog] handleAddToOrder called', { editMode, comments, quantity });
     const numericQuantity = typeof quantity === 'string' ? parseInt(quantity, 10) : quantity;
     if (isNaN(numericQuantity) || numericQuantity === 0) {
+      console.error('[ProductDialog] Invalid quantity, returning');
       return; // Don't add to order if quantity is 0 or invalid
     }
 
     if (editMode && itemToReplace?.uniqueId) {
       // Remove the old item first
+      console.error('[ProductDialog] Edit mode: removing old item', itemToReplace.uniqueId);
       removeFromOrder(itemToReplace.uniqueId);
     }
 
@@ -251,8 +254,10 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
     const orderItem: OrderItem = {
       ...selectedItem,
       quantity: numericQuantity,
-      price: basePrice
+      price: basePrice,
+      comment: comments || undefined
     };
+    console.error('[ProductDialog] Adding order item:', orderItem);
     addToOrder(orderItem);
 
     // Add each selected add-on as a separate cart line
@@ -306,11 +311,11 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
   };
 
   return (
-    <Dialog open={true} onOpenChange={handleClose}>
-      <DialogContent 
+    <Dialog open={true}>
+      <DialogContent
         ref={dialogRef}
         variant="xlarge"
-        className="bg-white w-full max-w-[90rem] max-h-[90vh] overflow-y-auto flex flex-col md:flex-row p-0"
+        className="bg-white w-full max-w-full md:max-w-[90rem] h-full md:max-h-[90vh] overflow-y-auto flex flex-col md:flex-row p-0"
         showCloseButton={false}
       >
         {/* Left Column - Image  */}
@@ -319,7 +324,7 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
             <img
               src={itemDoc.image}
               alt={itemDoc.name}
-              className="w-full min-h-96 h-full object-cover rounded-t-lg md:rounded-l-lg md:rounded-tr-none filter saturate-75 brightness-95"
+              className="w-full h-48 md:min-h-96 md:h-full object-cover rounded-t-lg md:rounded-l-lg md:rounded-tr-none filter saturate-75 brightness-95"
               style={{ filter: 'saturate(0.7) brightness(0.95)' }}
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
@@ -327,14 +332,14 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
                 const parent = target.parentElement;
                 if (parent) {
                   const placeholder = document.createElement('div');
-                  placeholder.className = 'w-full h-96 bg-gray-200 flex items-center justify-center text-[8rem] text-gray-400 font-medium rounded-t-lg md:rounded-l-lg md:rounded-tr-none';
+                  placeholder.className = 'w-full h-48 md:h-96 bg-gray-200 flex items-center justify-center text-4xl md:text-[8rem] text-gray-400 font-medium rounded-t-lg md:rounded-l-lg md:rounded-tr-none';
                   placeholder.textContent = itemDoc.name.slice(0, 2).toUpperCase();
                   parent.insertBefore(placeholder, target);
                 }
               }}
             />
           ) : (
-            <div className="w-full min-h-96 h-full bg-gray-200 flex items-center justify-center text-[8rem] text-gray-400 font-medium rounded-t-lg md:rounded-l-lg md:rounded-tr-none">
+            <div className="w-full h-48 md:min-h-96 md:h-full bg-gray-200 flex items-center justify-center text-4xl md:text-[8rem] text-gray-400 font-medium rounded-t-lg md:rounded-l-lg md:rounded-tr-none">
               {itemDoc?.name.slice(0, 2).toUpperCase()}
             </div>
           )}
@@ -349,7 +354,7 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
         </div>
 
         {/* Middle Column - Variants and Quantity */}
-        <div className="md:w-1/3 p-6 overflow-y-auto">
+        <div className="md:w-1/3 p-4 md:p-6 overflow-y-auto flex-shrink-0">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">{selectedItem?.item_name}</h2>
             <p className="text-sm text-gray-500 mt-1">{selectedItem?.item}</p>
@@ -430,7 +435,7 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
 
 
         {/* Right Column - Add-ons and Order Button */}
-        <div className="h-auto md:w-1/3 p-6 border-t md:border-t-0 md:border-l border-gray-200 overflow-y-auto flex flex-col">
+        <div className="h-auto md:w-1/3 p-4 md:p-6 border-t md:border-t-0 md:border-l border-gray-200 overflow-y-auto flex flex-col flex-1">
           <div className="overflow-y-auto mb-6">
             {isAddonLoading ? (
               <div className="mb-6 flex items-center justify-center text-gray-500">Loading add-ons...</div>
@@ -469,14 +474,14 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
               <span>Total&nbsp;</span>
               <span>{formatCurrency(total)}</span>
             </div>
-            <Button
+            <button
+              type="button"
               onClick={handleAddToOrder}
-              className="w-full mt-4"
-              size="lg"
+              className="w-full mt-4 h-12 px-4 py-2 bg-primary-600 text-white font-semibold rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={numericQuantity === 0}
             >
               {editMode || existingCartItem ? 'Update Order' : 'Add to Order'}
-            </Button>
+            </button>
           </div>
         </div>
       </DialogContent>

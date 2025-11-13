@@ -170,13 +170,27 @@ const StripeTerminalDialog: React.FC<StripeTerminalDialogProps> = ({
 
       // Step 2: Create payment intent
       console.log('Creating payment intent...');
+      console.log('Selected terminal object:', selectedTerminal);
+      console.log('Terminal erpnextName:', (selectedTerminal as any).erpnextName);
+      console.log('Terminal label:', selectedTerminal.label);
+
+      const terminalId = (selectedTerminal as any).erpnextName || selectedTerminal.label;
+      console.log('Using terminal ID:', terminalId);
+      console.log('Payment details:', {
+        amount: paymentAmount,
+        currency,
+        referenceDoctype,
+        referenceDocname,
+        terminalId
+      });
+
       const paymentIntent = await createPaymentIntent(
         paymentAmount,
         currency,
         referenceDoctype,
         referenceDocname,
         `Payment for ${referenceDocname}`,
-        (selectedTerminal as any).erpnextName || selectedTerminal.label
+        terminalId
       );
 
       if (!paymentIntent.success || !paymentIntent.client_secret) {

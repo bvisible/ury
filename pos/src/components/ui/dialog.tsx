@@ -4,7 +4,7 @@ import { cn } from "../../lib/utils"
 import { X } from "lucide-react"
 
 const dialogVariants = cva(
-  "fixed inset-0 z-50 flex items-center justify-center",
+  "fixed inset-0 z-[99999] flex items-center justify-center",
   {
     variants: {
       variant: {
@@ -81,7 +81,7 @@ const Dialog = React.forwardRef<HTMLDivElement, DialogProps>(
         {...props}
       >
         <div
-          className={cn(overlayVariants({ variant }))}
+          className={cn(overlayVariants({ variant }), "pointer-events-none")}
           onClick={() => onOpenChange?.(false)}
         />
         {children}
@@ -102,7 +102,7 @@ const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
   ({ className, variant, size, onClose, showCloseButton = true, children, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn(contentVariants({ variant, size, className }))}
+      className={cn(contentVariants({ variant, size, className }), "pointer-events-auto")}
       onClick={(e) => e.stopPropagation()}
       {...props}
     >

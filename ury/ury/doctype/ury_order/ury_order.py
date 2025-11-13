@@ -572,17 +572,31 @@ def make_invoice(customer, payments, cashier, pos_profile,owner, additionalDisco
         pay.delete(pay.mode_of_payment)
 
     for d in payments:
-        invoice.append(
-            "payments", dict(mode_of_payment=d["mode_of_payment"], amount=d["amount"])
-        )
+        payment_entry = dict(mode_of_payment=d["mode_of_payment"], amount=d["amount"])
+
+        # Add payment processor transaction references if available
+        if d.get("transaction_id"):
+            payment_entry["custom_transaction_reference"] = d.get("transaction_id")
+
+        if d.get("payment_intent_id"):
+            payment_entry["custom_payment_intent_id"] = d.get("payment_intent_id")
+
+        invoice.append("payments", payment_entry)
 
     invoice.save()
     try:
         invoice.submit()
     except Exception as e:
         frappe.throw(f"Error while settling order: {e}")
-    
-    
+
+    # Update owner to the cashier who processed the payment
+    frappe.db.sql("""
+        UPDATE `tabPOS Invoice`
+        SET owner = %s
+        WHERE name = %s
+    """, (owner, invoice.name))
+    frappe.db.commit()
+
 
 # Cancel KOT Doc Creation
 def cancel_kot(invoice_id):
