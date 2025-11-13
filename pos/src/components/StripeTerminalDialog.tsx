@@ -85,17 +85,30 @@ const StripeTerminalDialog: React.FC<StripeTerminalDialogProps> = ({
       // Discover readers using SDK
       const discoveredReaders = await StripeBridge.discoverReaders(simulationMode);
 
-      setTerminals(discoveredReaders);
+      // Get ERPNext terminals to map names
+      const erpnextTerminals = await getAvailableTerminals(posProfile);
+
+      // Map SDK readers with ERPNext terminal names
+      const mappedTerminals = discoveredReaders.map(reader => {
+        // Find matching ERPNext terminal by label
+        const erpnextTerminal = erpnextTerminals.find(t => t.label === reader.label);
+        return {
+          ...reader,
+          erpnextName: erpnextTerminal?.name || reader.label // Use ERPNext name for API calls
+        };
+      });
+
+      setTerminals(mappedTerminals);
 
       // Auto-select last used terminal or first terminal if only one available
       const lastUsed = StripeBridge.getLastUsedTerminal();
-      if (lastUsed && discoveredReaders.find(r => r.id === lastUsed.id)) {
-        const reader = discoveredReaders.find(r => r.id === lastUsed.id);
+      if (lastUsed && mappedTerminals.find(r => r.id === lastUsed.id)) {
+        const reader = mappedTerminals.find(r => r.id === lastUsed.id);
         if (reader) {
           setSelectedTerminal(reader);
         }
-      } else if (discoveredReaders.length === 1) {
-        setSelectedTerminal(discoveredReaders[0]);
+      } else if (mappedTerminals.length === 1) {
+        setSelectedTerminal(mappedTerminals[0]);
       }
     } catch (error) {
       console.error('Failed to load terminals:', error);
@@ -163,7 +176,7 @@ const StripeTerminalDialog: React.FC<StripeTerminalDialogProps> = ({
         referenceDoctype,
         referenceDocname,
         `Payment for ${referenceDocname}`,
-        selectedTerminal.id || selectedTerminal.label
+        (selectedTerminal as any).erpnextName || selectedTerminal.label
       );
 
       if (!paymentIntent.success || !paymentIntent.client_secret) {
