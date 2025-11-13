@@ -193,8 +193,10 @@ const StripeTerminalDialog: React.FC<StripeTerminalDialogProps> = ({
         terminalId
       );
 
-      if (!paymentIntent.success || !paymentIntent.client_secret) {
-        throw new Error('Failed to create payment intent');
+      console.log('Payment intent created:', paymentIntent);
+
+      if (!paymentIntent.client_secret) {
+        throw new Error('Failed to create payment intent - no client secret');
       }
 
       // Step 3 & 4: Collect payment method and process payment using connected terminal
