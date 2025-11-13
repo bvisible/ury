@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { X, Percent, Coins } from 'lucide-react';
+import { X, Percent, Coins, CreditCard, Smartphone } from 'lucide-react';
 import { usePOSStore } from '../store/pos-store';
 import { cn, formatCurrency } from '../lib/utils';
 import { Button, Input, Dialog, DialogContent } from './ui';
 import { call } from '../lib/frappe-sdk';
+import { __ } from '../lib/i18n';
+import StripeTerminalDialog from './StripeTerminalDialog';
+import TwintPaymentDialog from './TwintPaymentDialog';
 
 
 interface PaymentDialogProps {
@@ -33,17 +36,30 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
   fetchOrders,
   clearSelectedOrder
 }) => {
-  const { paymentModes, fetchPaymentModes, posProfile: storePosProfile } = usePOSStore();
+  const {
+    paymentModes,
+    fetchPaymentModes,
+    fetchPaymentProcessorConfigs,
+    posProfile: storePosProfile,
+    stripeTerminalConfig,
+    twintConfig,
+    isSpecialPaymentMode,
+    addProcessorPayment
+  } = usePOSStore();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [discountType] = useState<'percentage'>('percentage'); // Only percentage now
   const [discountValue, setDiscountValue] = useState<string>('');
   const [appliedDiscount, setAppliedDiscount] = useState<number>(0);
   const [paymentInputs, setPaymentInputs] = useState<{ [mode: string]: string }>({});
+  const [activeProcessorDialog, setActiveProcessorDialog] = useState<'stripe' | 'twint' | null>(null);
+  const [selectedPaymentMode, setSelectedPaymentMode] = useState<string | null>(null);
+  const [processorTransactions, setProcessorTransactions] = useState<{ [mode: string]: { transactionId: string, paymentIntentId?: string } }>({});
 
   useEffect(() => {
     fetchPaymentModes();
-  }, [fetchPaymentModes]);
+    fetchPaymentProcessorConfigs();
+  }, [fetchPaymentModes, fetchPaymentProcessorConfigs]);
 
   // Calculate split payment total
   const payments = paymentModes
@@ -103,17 +119,116 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
     });
   };
 
+  /**
+   * Handle click on payment mode input
+   * If it's a special payment mode (Stripe/TWINT), open the appropriate dialog
+   */
+  const handlePaymentModeClick = (modeId: string) => {
+    // Check if this is a special payment mode
+    if (stripeTerminalConfig?.enabled && stripeTerminalConfig.modeOfPayment === modeId) {
+      setSelectedPaymentMode(modeId);
+      setActiveProcessorDialog('stripe');
+    } else if (twintConfig?.enabled && twintConfig.modeOfPayment === modeId) {
+      setSelectedPaymentMode(modeId);
+      setActiveProcessorDialog('twint');
+    }
+  };
+
+  /**
+   * Handle successful Stripe Terminal payment
+   */
+  const handleStripeTerminalSuccess = (amount: number, transactionId: string, paymentIntentId: string) => {
+    if (selectedPaymentMode) {
+      // Store transaction reference
+      setProcessorTransactions(prev => ({
+        ...prev,
+        [selectedPaymentMode]: { transactionId, paymentIntentId }
+      }));
+
+      // Auto-fill the payment input with the amount
+      setPaymentInputs(inputs => ({
+        ...inputs,
+        [selectedPaymentMode]: String(amount)
+      }));
+
+      // Add to processor payments tracking
+      addProcessorPayment({
+        mode: selectedPaymentMode,
+        amount,
+        transactionId,
+        paymentIntentId,
+        status: 'completed',
+        processor: 'stripe_terminal'
+      });
+    }
+
+    setActiveProcessorDialog(null);
+    setSelectedPaymentMode(null);
+  };
+
+  /**
+   * Handle successful TWINT payment
+   */
+  const handleTwintSuccess = (amount: number, transactionId: string) => {
+    if (selectedPaymentMode) {
+      // Store transaction reference
+      setProcessorTransactions(prev => ({
+        ...prev,
+        [selectedPaymentMode]: { transactionId }
+      }));
+
+      // Auto-fill the payment input with the amount
+      setPaymentInputs(inputs => ({
+        ...inputs,
+        [selectedPaymentMode]: String(amount)
+      }));
+
+      // Add to processor payments tracking
+      addProcessorPayment({
+        mode: selectedPaymentMode,
+        amount,
+        transactionId,
+        status: 'completed',
+        processor: 'twint'
+      });
+    }
+
+    setActiveProcessorDialog(null);
+    setSelectedPaymentMode(null);
+  };
+
+  /**
+   * Close processor dialog
+   */
+  const handleCloseProcessorDialog = () => {
+    setActiveProcessorDialog(null);
+    setSelectedPaymentMode(null);
+  };
+
   const handlePayment = async () => {
     setIsProcessing(true);
     setError(null);
     try {
+      // Enhance payments with processor transaction references
+      const enhancedPayments = payments.map((payment: any) => {
+        const transaction = processorTransactions[payment.mode_of_payment];
+        if (transaction) {
+          return {
+            ...payment,
+            transaction_id: transaction.transactionId,
+            payment_intent_id: transaction.paymentIntentId
+          };
+        }
+        return payment;
+      });
+
       await call.post('ury.ury.doctype.ury_order.ury_order.make_invoice', {
         additionalDiscount: discountValue ? parseInt(discountValue) : null,
         cashier,
         customer,
         invoice,
         owner,
-        payments,
+        payments: enhancedPayments,
         pos_profile: posProfile,
         table,
       });
@@ -132,7 +247,41 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
   };
 
   return (
-    <Dialog open={true} onOpenChange={onClose}>
+    <>
+      {/* Stripe Terminal Dialog */}
+      {activeProcessorDialog === 'stripe' && stripeTerminalConfig && (
+        <div className="fixed inset-0 z-[100000]">
+          <StripeTerminalDialog
+            isOpen={true}
+            onClose={handleCloseProcessorDialog}
+            onSuccess={handleStripeTerminalSuccess}
+            maxAmount={finalTotal - paymentsTotal}
+            currency={storePosProfile?.currency || 'CHF'}
+            posProfile={posProfile}
+            referenceDoctype="URY Order"
+            referenceDocname={invoice}
+          />
+        </div>
+      )}
+
+      {/* TWINT Payment Dialog */}
+      {activeProcessorDialog === 'twint' && twintConfig && (
+        <div className="fixed inset-0 z-[100000]">
+          <TwintPaymentDialog
+            isOpen={true}
+            onClose={handleCloseProcessorDialog}
+            onSuccess={handleTwintSuccess}
+            maxAmount={finalTotal - paymentsTotal}
+            currency={storePosProfile?.currency || 'CHF'}
+            referenceDoctype="URY Order"
+            referenceDocname={invoice}
+            customerName={customer}
+          />
+        </div>
+      )}
+
+      {/* Main Payment Dialog */}
+      <Dialog open={true} onOpenChange={onClose}>
       <DialogContent variant="xlarge" className="bg-white w-full max-w-4xl max-h-[90vh] flex flex-col md:flex-row p-0" showCloseButton={false}>
         {/* Left Column - Discount and Payment Mode */}
         <div className="md:w-1/2 p-6 border-b md:border-b-0 md:border-r border-gray-200 overflow-y-auto">
@@ -181,21 +330,52 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
             <div className="grid grid-cols-1 gap-3">
               {paymentModes.map((mode: any) => {
                 const id = typeof mode === 'string' ? mode : mode.id;
+                const isStripeMode = stripeTerminalConfig?.enabled && stripeTerminalConfig.modeOfPayment === id;
+                const isTwintMode = twintConfig?.enabled && twintConfig.modeOfPayment === id;
+                const isSpecialMode = isStripeMode || isTwintMode;
+                const hasProcessorTransaction = processorTransactions[id];
+
                 return (
-                  <div key={id} className="flex items-center gap-3">
-                    <span className="w-24 font-medium">{typeof mode === 'string' ? mode : mode.name}</span>
+                  <div key={id} className="flex items-center gap-2">
+                    <span className="w-24 font-medium text-sm">{typeof mode === 'string' ? mode : mode.name}</span>
+
+                    {/* Regular input or read-only amount for completed processor payment */}
                     <Input
                       type="number"
                       min="0"
                       step="0.01"
                       value={paymentInputs[id] || ''}
-                      onChange={e => setPaymentInputs(inputs => ({ ...inputs, [id]: e.target.value }))}
-                      onFocus={() => handlePaymentInputFocus(id)}
-                      placeholder="Amount"
-                      className="flex-1"
+                      onChange={e => !isSpecialMode && setPaymentInputs(inputs => ({ ...inputs, [id]: e.target.value }))}
+                      onFocus={() => !isSpecialMode && handlePaymentInputFocus(id)}
+                      placeholder={isSpecialMode ? __('0.00') : __('Amount')}
+                      className={cn(
+                        "flex-1",
+                        isSpecialMode && hasProcessorTransaction && "bg-green-50 border-green-500 font-semibold",
+                        isSpecialMode && !hasProcessorTransaction && "bg-gray-50"
+                      )}
                       size="sm"
-                      disabled={isProcessing}
+                      disabled={isProcessing || isSpecialMode}
+                      readOnly={isSpecialMode}
                     />
+
+                    {/* Special payment mode button */}
+                    {isSpecialMode && !hasProcessorTransaction && (
+                      <Button
+                        onClick={() => handlePaymentModeClick(id)}
+                        variant="outline"
+                        size="sm"
+                        className={cn(
+                          "flex items-center gap-2 flex-1",
+                          isStripeMode && "border-blue-500 text-blue-700 hover:bg-blue-50",
+                          isTwintMode && "border-purple-500 text-purple-700 hover:bg-purple-50"
+                        )}
+                        disabled={isProcessing}
+                      >
+                        {isStripeMode && <CreditCard className="h-4 w-4" />}
+                        {isTwintMode && <Smartphone className="h-4 w-4" />}
+                        {__('Pay with')} {isStripeMode ? 'Terminal' : 'TWINT'}
+                      </Button>
+                    )}
                   </div>
                 );
               })}
@@ -269,6 +449,7 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
         </div>
       </DialogContent>
     </Dialog>
+    </>
   );
 };
 
