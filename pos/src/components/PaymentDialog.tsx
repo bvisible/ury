@@ -59,7 +59,8 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
   useEffect(() => {
     fetchPaymentModes();
     fetchPaymentProcessorConfigs();
-  }, [fetchPaymentModes, fetchPaymentProcessorConfigs]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Calculate split payment total
   const payments = paymentModes
