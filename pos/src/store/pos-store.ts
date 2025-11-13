@@ -8,6 +8,8 @@ import { getCustomerGroups, getCustomerTerritories } from '../lib/customer-api';
 import { DEFAULT_ORDER_TYPE, OrderType } from '../data/order-types';
 import { getTableOrder, TableOrder } from '../lib/order-api';
 import { getPaymentModes } from '../lib/payment-api';
+import { getStripeTerminalConfig } from '../lib/stripe-terminal-api';
+import { getTwintConfig } from '../lib/twint-api';
 
 // Constants
 const MAX_QUANTITY = 99;
@@ -84,6 +86,30 @@ interface Aggregator {
   customer: string;
 }
 
+// Payment processor configurations
+interface StripeTerminalConfig {
+  enabled: boolean;
+  modeOfPayment: string | null;
+  defaultTerminal: string | null;
+}
+
+interface TwintConfig {
+  enabled: boolean;
+  modeOfPayment: string | null;
+  merchant_id?: string;
+  environment?: 'sandbox' | 'production';
+}
+
+// Processor payment tracking
+interface ProcessorPayment {
+  mode: string;
+  amount: number;
+  transactionId: string;
+  paymentIntentId?: string;
+  status: 'pending' | 'completed' | 'failed';
+  processor: 'stripe_terminal' | 'twint';
+}
+
 interface POSState {
   menuItems: MenuItem[];
   categories: string[];
@@ -115,6 +141,9 @@ interface POSState {
   tableOrder: TableOrder | null;
   isInitializing: boolean;
   orderComment: string;
+  stripeTerminalConfig: StripeTerminalConfig | null;
+  twintConfig: TwintConfig | null;
+  processorPayments: ProcessorPayment[];
 }
 
 interface POSStore extends POSState {
@@ -146,6 +175,7 @@ interface POSStore extends POSState {
   getItemPrice: (item: OrderItem) => number;
   getItemQuantityFromCart: (item: MenuItem) => number;
   loadTableOrder: (table: string) => Promise<void>;
+  loadOrderForEditing: (orderData: any, orderItems: any[]) => Promise<void>;
   clearTableOrder: () => void;
   isMenuInteractionDisabled: () => boolean;
   isOrderInteractionDisabled: () => boolean;
@@ -154,6 +184,10 @@ interface POSStore extends POSState {
   resetOrderState: () => void;
   setSelectedAggregator: (aggregator: Aggregator | null) => void;
   setOrderComment: (comment: string) => void;
+  fetchPaymentProcessorConfigs: () => Promise<void>;
+  addProcessorPayment: (payment: ProcessorPayment) => void;
+  clearProcessorPayments: () => void;
+  isSpecialPaymentMode: (modeOfPayment: string) => boolean;
 }
 
 const generateUniqueId = (item: OrderItem): string => {
@@ -196,6 +230,9 @@ export const usePOSStore = create<POSStore>((set, get) => ({
   currencySymbol: storage.getItem('currencySymbol') || null,
   tableOrder: null,
   isInitializing: true,
+  stripeTerminalConfig: null,
+  twintConfig: null,
+  processorPayments: [],
   isUpdatingOrder: false,
   orderId: null,
   orderComment: '',
@@ -204,11 +241,12 @@ export const usePOSStore = create<POSStore>((set, get) => ({
     try {
       set({ isInitializing: true, error: null });
       
-      const [profileResult, menuResult, categoriesResult, paymentModesResult] = await Promise.allSettled([
+      const [profileResult, menuResult, categoriesResult, paymentModesResult, processorConfigResult] = await Promise.allSettled([
         get().fetchPosProfile(),
         get().fetchMenuItems(),
         get().fetchCategories(),
-        get().fetchPaymentModes()
+        get().fetchPaymentModes(),
+        get().fetchPaymentProcessorConfigs()
       ]);
 
       if (profileResult.status === 'rejected' || 
@@ -369,13 +407,18 @@ export const usePOSStore = create<POSStore>((set, get) => ({
   },
 
   addToOrder: async (item: OrderItem) => {
+    console.error('[addToOrder] Called with item:', item);
+    console.error('[addToOrder] Current activeOrders:', get().activeOrders);
     try {
       if (!get().validateQuantity(item.quantity)) {
+        console.error('[addToOrder] Invalid quantity:', item.quantity);
         throw new CartError(`Quantity must be between ${MIN_QUANTITY} and ${MAX_QUANTITY}`);
       }
 
       const uniqueId = generateUniqueId(item);
+      console.error('[addToOrder] Generated uniqueId:', uniqueId);
       const existingItemIndex = get().activeOrders.findIndex(orderItem => orderItem.uniqueId === uniqueId);
+      console.error('[addToOrder] existingItemIndex:', existingItemIndex);
 
       if (existingItemIndex !== -1) {
         const existingItem = get().activeOrders[existingItemIndex];
@@ -392,13 +435,17 @@ export const usePOSStore = create<POSStore>((set, get) => ({
           quantity: newQuantity,
           comment: newComment
         };
-        
+
+        console.error('[addToOrder] Updating existing item, newOrders:', newOrders);
         set({ activeOrders: newOrders });
       } else {
         const newOrders = [...get().activeOrders, { ...item, uniqueId }];
+        console.error('[addToOrder] Adding new item, newOrders:', newOrders);
         set({ activeOrders: newOrders });
       }
+      console.error('[addToOrder] SUCCESS! activeOrders after set:', get().activeOrders);
     } catch (error) {
+      console.error('[addToOrder] ERROR:', error);
       if (error instanceof CartError) {
         set({ error: error.message });
       } else {
@@ -610,7 +657,7 @@ export const usePOSStore = create<POSStore>((set, get) => ({
           } as OrderItem;
         });
 
-        set({ 
+        set({
           tableOrder: response,
           activeOrders: orderItems,
           selectedCustomer: order.customer ? {
@@ -646,8 +693,58 @@ export const usePOSStore = create<POSStore>((set, get) => ({
     }
   },
 
+  loadOrderForEditing: async (orderData: any, orderItems: any[]) => {
+    try {
+      set({ orderLoading: true, error: null });
+
+      if (orderData && orderItems && orderItems.length > 0) {
+        const cartItems: OrderItem[] = orderItems.map(item => {
+          const orderItem = {
+            id: item.item_code || item.id,
+            name: item.item_name,
+            price: item.rate || item.amount / item.qty,
+            quantity: item.qty,
+            amount: item.amount,
+            image: item.image || null,
+            item: item.item_code || item.id,
+            item_name: item.item_name,
+            item_image: null,
+            course: '',
+            description: '',
+            special_dish: 0 as 0 | 1,
+            tax_rate: 0,
+          };
+          return {
+            ...orderItem,
+            uniqueId: generateUniqueId(orderItem as OrderItem)
+          } as OrderItem;
+        });
+
+        set({
+          activeOrders: cartItems,
+          selectedCustomer: orderData.customer ? {
+            id: orderData.customer,
+            name: orderData.customer_name || orderData.customer,
+            phone: orderData.mobile_number || '',
+          } : null,
+          selectedTable: orderData.restaurant_table || null,
+          selectedOrderType: orderData.order_type || DEFAULT_ORDER_TYPE,
+          isUpdatingOrder: true,
+          orderId: orderData.name,
+        });
+      }
+    } catch (error) {
+      set({
+        error: 'Failed to load order for editing',
+      });
+      throw error;
+    } finally {
+      set({ orderLoading: false });
+    }
+  },
+
   clearTableOrder: () => {
-    set({ 
+    set({
       tableOrder: null,
       activeOrders: [],
       selectedCustomer: null,
@@ -693,5 +790,57 @@ export const usePOSStore = create<POSStore>((set, get) => ({
   isOrderInteractionDisabled: () => {
     const state = get();
     return state.orderLoading;
+  },
+
+  // Fetch payment processor configurations
+  fetchPaymentProcessorConfigs: async () => {
+    const { posProfile } = get();
+    if (!posProfile) {
+      console.warn('POS Profile not loaded yet');
+      return;
+    }
+
+    try {
+      // Fetch Stripe Terminal config
+      const stripeConfig = await getStripeTerminalConfig(posProfile.name);
+      set({ stripeTerminalConfig: stripeConfig });
+
+      // Fetch TWINT config
+      const twintConfigData = await getTwintConfig(posProfile.name);
+      set({ twintConfig: twintConfigData });
+
+      console.log('Payment processor configs loaded', { stripeConfig, twintConfigData });
+    } catch (error) {
+      console.error('Failed to fetch payment processor configs:', error);
+    }
+  },
+
+  // Add a processor payment to the list
+  addProcessorPayment: (payment: ProcessorPayment) => {
+    set((state) => ({
+      processorPayments: [...state.processorPayments, payment]
+    }));
+  },
+
+  // Clear processor payments (e.g., after completing order)
+  clearProcessorPayments: () => {
+    set({ processorPayments: [] });
+  },
+
+  // Check if a payment mode requires special processor handling
+  isSpecialPaymentMode: (modeOfPayment: string) => {
+    const { stripeTerminalConfig, twintConfig } = get();
+
+    // Check Stripe Terminal
+    if (stripeTerminalConfig?.enabled && stripeTerminalConfig.modeOfPayment === modeOfPayment) {
+      return true;
+    }
+
+    // Check TWINT
+    if (twintConfig?.enabled && twintConfig.modeOfPayment === modeOfPayment) {
+      return true;
+    }
+
+    return false;
   }
 })); 
