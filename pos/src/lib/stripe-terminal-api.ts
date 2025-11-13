@@ -136,13 +136,11 @@ export const createPaymentIntent = async (
       terminalId
     });
 
+    // Backend only accepts: terminal_id, amount, currency
     const requestData = {
       terminal_id: terminalId || 'default',
       amount: amount * 100, // Convert to cents
-      currency: currency.toLowerCase(),
-      reference_doctype: referenceDoctype,
-      reference_docname: referenceDocname,
-      description: description || `Payment for ${referenceDocname}`
+      currency: currency.toLowerCase()
     };
 
     console.log('[createPaymentIntent] Request data:', requestData);
