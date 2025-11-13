@@ -162,7 +162,8 @@ const StripeTerminalDialog: React.FC<StripeTerminalDialogProps> = ({
         currency,
         referenceDoctype,
         referenceDocname,
-        `Payment for ${referenceDocname}`
+        `Payment for ${referenceDocname}`,
+        selectedTerminal.id || selectedTerminal.label
       );
 
       if (!paymentIntent.success || !paymentIntent.client_secret) {

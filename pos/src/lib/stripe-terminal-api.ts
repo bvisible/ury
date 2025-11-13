@@ -123,10 +123,12 @@ export const createPaymentIntent = async (
   currency: string,
   referenceDoctype: string,
   referenceDocname: string,
-  description?: string
+  description?: string,
+  terminalId?: string
 ): Promise<PaymentIntentResponse> => {
   try {
     const response = await call.post('neopay_integration.api.create_payment_intent', {
+      terminal_id: terminalId || 'default',
       amount: amount * 100, // Convert to cents
       currency: currency.toLowerCase(),
       reference_doctype: referenceDoctype,
