@@ -196,7 +196,7 @@ export const init = async (): Promise<boolean> => {
 const fetchConnectionToken = async (): Promise<string> => {
   try {
     console.log('[StripeTerminalBridge] Fetching connection token...');
-    const response = await call.post('neopay_integration.api.get_connection_token', {});
+    const response = await call.post('neopay_integration.api.get_connection_token_any', {});
     return response.message;
   } catch (error) {
     console.error('[StripeTerminalBridge] Failed to fetch connection token:', error);
