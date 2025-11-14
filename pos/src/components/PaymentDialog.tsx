@@ -460,8 +460,8 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
           {/* Payment Button */}
           <Button
             onClick={handlePayment}
-            disabled={isProcessing || payments.length === 0}
-            variant={isProcessing || payments.length === 0 ? "secondary" : "default"}
+            disabled={isProcessing || payments.length === 0 || paymentsTotal < finalTotal}
+            variant={isProcessing || payments.length === 0 || paymentsTotal < finalTotal ? "secondary" : "default"}
             className="w-full"
           >
             {isProcessing ? 'Processing...' : `Pay ${formatCurrency(paymentsTotal>0?paymentsTotal:finalTotal)}`}
