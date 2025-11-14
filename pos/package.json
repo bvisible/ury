@@ -18,6 +18,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.23.24",
+    "motion": "^11.0.0",
     "frappe-js-sdk": "^1.10.0",
     "jsrsasign": "^11.1.0",
     "lucide-react": "^0.525.0",
