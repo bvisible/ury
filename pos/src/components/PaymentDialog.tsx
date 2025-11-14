@@ -95,8 +95,13 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
   const showAdjustment = Math.abs(roundedAdjustment) > 0.001;
   const totalDiscount = appliedDiscount;
   const discountedTotal = Math.max(0, subtotal - totalDiscount);
-  // If discount is applied, round up; else, round normally
-  const finalTotal = appliedDiscount > 0 ? Math.ceil(discountedTotal) : Math.round(discountedTotal);
+
+  // Use ERPNext's rounded_total instead of custom rounding logic
+  // When discount is applied, adjust the rounded_total proportionally
+  const finalTotal = appliedDiscount > 0
+    ? roundedTotal - (grandTotal - discountedTotal)  // Apply discount to rounded total
+    : roundedTotal;  // No discount: use ERPNext's rounded_total directly
+
   const finalAdjustment = finalTotal - discountedTotal;
   const roundedFinalAdjustment = Math.round(finalAdjustment * 100) / 100;
   const showFinalAdjustment = Math.abs(roundedFinalAdjustment) > 0.001;

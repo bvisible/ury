@@ -70,9 +70,13 @@ const PaymentAmountDialog: React.FC<PaymentAmountDialogProps> = ({
 
   /**
    * Backspace - remove last digit (shift right)
+   * Converts amount to cents, removes last digit, converts back to currency
+   * Example: 4.20 -> 420 cents -> 42 cents -> 0.42
    */
   const handleBackspace = () => {
-    const newAmount = Math.floor(amount * 10) / 100;
+    const cents = Math.floor(amount * 100);
+    const newCents = Math.floor(cents / 10);
+    const newAmount = newCents / 100;
     setAmount(newAmount);
   };
 
