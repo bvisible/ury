@@ -4,6 +4,7 @@ import { CreditCard, AlertCircle, CheckCircle, Loader2, Wifi, WifiOff } from 'lu
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Button } from './ui/button';
 import { cn, formatCurrency } from '../lib/utils';
+import { usePOSStore } from '../store/pos-store';
 import PaymentAmountDialog from './PaymentAmountDialog';
 import {
   getAvailableTerminals,
@@ -45,6 +46,9 @@ const StripeTerminalDialog: React.FC<StripeTerminalDialogProps> = ({
   referenceDoctype,
   referenceDocname
 }) => {
+  const { user } = usePOSStore();
+  const isAdmin = user?.roles?.includes('Administrator') || false;
+
   const [dialogState, setDialogState] = useState<DialogState>('terminal-selection');
   const [amount, setAmount] = useState<number>(0);
   const [terminals, setTerminals] = useState<any[]>([]);
@@ -53,7 +57,7 @@ const StripeTerminalDialog: React.FC<StripeTerminalDialogProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [paymentResult, setPaymentResult] = useState<PaymentIntentResponse | null>(null);
-  const [simulationMode, setSimulationMode] = useState(false);
+  const [simulationMode, setSimulationMode] = useState(isAdmin);
 
   // Reset state when dialog opens
   useEffect(() => {
@@ -72,6 +76,15 @@ const StripeTerminalDialog: React.FC<StripeTerminalDialogProps> = ({
       loadAvailableTerminals();
     }
   }, [dialogState]);
+
+  // Reload terminals when simulation mode changes
+  useEffect(() => {
+    if (dialogState === 'terminal-selection') {
+      setTerminals([]); // Clear current terminals
+      setSelectedTerminal(null); // Clear selection
+      loadAvailableTerminals();
+    }
+  }, [simulationMode]);
 
   /**
    * Load available terminals using Stripe Terminal SDK
@@ -283,6 +296,26 @@ const StripeTerminalDialog: React.FC<StripeTerminalDialogProps> = ({
           {/* Terminal Selection State */}
           {dialogState === 'terminal-selection' && (
             <>
+              {/* Simulation Mode Toggle (Admin Only) */}
+              {isAdmin && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={simulationMode}
+                      onChange={(e) => setSimulationMode(e.target.checked)}
+                      className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                    />
+                    <span className="text-sm font-medium text-yellow-900">
+                      {__('Use Simulated Terminal (Testing)')}
+                    </span>
+                  </label>
+                  <p className="text-xs text-yellow-700 mt-1 ml-6">
+                    {__('Enables test terminal for development and testing purposes')}
+                  </p>
+                </div>
+              )}
+
               {/* Terminal List */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
