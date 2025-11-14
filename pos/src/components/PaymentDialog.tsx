@@ -7,6 +7,7 @@ import { call } from '../lib/frappe-sdk';
 import { __ } from '../lib/i18n';
 import StripeTerminalDialog from './StripeTerminalDialog';
 import TwintPaymentDialog from './TwintPaymentDialog';
+import { DEFAULT_PAYMENT_MODE } from '../data/order-types';
 
 
 interface PaymentDialogProps {
@@ -99,6 +100,19 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
   const finalAdjustment = finalTotal - discountedTotal;
   const roundedFinalAdjustment = Math.round(finalAdjustment * 100) / 100;
   const showFinalAdjustment = Math.abs(roundedFinalAdjustment) > 0.001;
+
+  useEffect(()=>{
+    const defaultPaymentModePresent=paymentModes.find((mode)=>mode===DEFAULT_PAYMENT_MODE)
+    //only one payment mode should be present, then autofill the final amount, if not do not fill
+    const otherPaymentModesNotEntered=Object.keys(paymentInputs).length<=1;
+    if(finalTotal && paymentModes && DEFAULT_PAYMENT_MODE && defaultPaymentModePresent && otherPaymentModesNotEntered){
+      //check if default payment mode is present in paymentModes
+      setPaymentInputs((prev)=>({ 
+        ...prev,
+        [DEFAULT_PAYMENT_MODE]:String(finalTotal) 
+      }))
+    }
+  },[finalTotal,paymentModes])
 
   // Helper to calculate remaining balance
   const getRemainingBalance = (currentId: string) => {
