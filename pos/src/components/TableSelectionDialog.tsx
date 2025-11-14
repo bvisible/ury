@@ -211,8 +211,8 @@ const TableSelectionDialog: React.FC<Props> = ({ onClose }) => {
 
                       // Set table after customer is set
                       console.error('[TableSelection] About to set table and call onClose');
-                      // Pass doNotLoadOrder: true because we're creating a new order, not loading an existing one
-                      setSelectedTable(table.name, selectedRoom, true);
+                      // Load existing order if table has one (allows adding items to existing orders)
+                      setSelectedTable(table.name, selectedRoom, false);
                       console.error('[TableSelection] Calling onClose NOW');
                       onClose();
                       console.error('[TableSelection] onClose called');
