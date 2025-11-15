@@ -25,7 +25,7 @@ const Footer = () => {
 
   return (
     <div className="bg-white border-t border-gray-200 py-2 relative">
-      <nav className="max-w-screen-xl mx-auto px-4">
+      <nav className="max-w-[200px] absolute bottom-2 left-1/2 -translate-x-1/2 border border-border rounded-[20px] bg-white px-4 py-1">
         <div className="flex justify-center items-center gap-4">
           {navItems.map((item) => (
             <NavLink
