@@ -276,15 +276,21 @@ export const usePOSStore = create<POSStore>((set, get) => ({
       const cached = sessionStorage.getItem('posProfile');
       if (cached) {
         const profile = JSON.parse(cached);
+        console.log('[POS Store] Using cached POS Profile:', profile.name);
+        console.log('[POS Store] Customer in profile:', profile?.customer);
 
         // Also load default customer from cache
         let defaultCustomer = null;
         if (profile?.customer) {
+          console.log('[POS Store] Loading default customer from cached profile...');
           try {
             defaultCustomer = await getDefaultCustomerFromProfile(profile);
+            console.log('[POS Store] Default customer loaded:', defaultCustomer);
           } catch (err) {
-            console.error("Failed to fetch default customer from cache:", err);
+            console.error("[POS Store] Failed to fetch default customer from cache:", err);
           }
+        } else {
+          console.log('[POS Store] No customer configured in POS Profile');
         }
 
         const customerData = defaultCustomer ? {
@@ -292,6 +298,8 @@ export const usePOSStore = create<POSStore>((set, get) => ({
             name: defaultCustomer.customer_name,
             phone: defaultCustomer.mobile_number,
           } : null;
+
+        console.log('[POS Store] Setting customer data:', customerData);
 
         set({
           posProfile: profile,
@@ -308,16 +316,22 @@ export const usePOSStore = create<POSStore>((set, get) => ({
 
       set({ profileLoading: true, error: null });
       const combinedProfile = await getCombinedPosProfile();
+      console.log('[POS Store] Fetched fresh POS Profile:', combinedProfile.name);
+      console.log('[POS Store] Customer in profile:', combinedProfile?.customer);
 
       sessionStorage.setItem('posProfile', JSON.stringify(combinedProfile));
 
       let defaultCustomer = null;
       if (combinedProfile?.customer) {
+        console.log('[POS Store] Loading default customer from fresh profile...');
         try {
           defaultCustomer = await getDefaultCustomerFromProfile(combinedProfile);
+          console.log('[POS Store] Default customer loaded:', defaultCustomer);
         } catch (err) {
-          console.error("Failed to fetch default customer:", err);
+          console.error("[POS Store] Failed to fetch default customer:", err);
         }
+      } else {
+        console.log('[POS Store] No customer configured in POS Profile');
       }
 
       const customerData = defaultCustomer ? {
@@ -325,6 +339,8 @@ export const usePOSStore = create<POSStore>((set, get) => ({
           name: defaultCustomer.customer_name,
           phone: defaultCustomer.mobile_number,
         } : null;
+
+      console.log('[POS Store] Setting customer data:', customerData);
 
       set({
         posProfile: combinedProfile,

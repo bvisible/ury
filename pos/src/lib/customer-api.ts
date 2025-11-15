@@ -104,13 +104,21 @@ export async function getCustomerByName(customerName: string): Promise<Customer 
 
 export async function getDefaultCustomerFromProfile(profile: any): Promise<Customer | null> {
   try {
-    if (!profile?.customer) return null;
+    console.log('[Customer API] getDefaultCustomerFromProfile called with profile:', profile?.name);
+    console.log('[Customer API] Customer name from profile:', profile?.customer);
+
+    if (!profile?.customer) {
+      console.log('[Customer API] No customer in profile, returning null');
+      return null;
+    }
 
     // Fetch full customer document
+    console.log('[Customer API] Fetching customer by name:', profile.customer);
     const customer = await getCustomerByName(profile.customer);
+    console.log('[Customer API] Customer fetched:', customer);
     return customer;
   } catch (error) {
-    console.error("Error fetching default customer:", error);
+    console.error("[Customer API] Error fetching default customer:", error);
     return null;
   }
 }
