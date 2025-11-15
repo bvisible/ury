@@ -276,12 +276,29 @@ export const usePOSStore = create<POSStore>((set, get) => ({
       const cached = sessionStorage.getItem('posProfile');
       if (cached) {
         const profile = JSON.parse(cached);
+
+        // Also load default customer from cache
+        let defaultCustomer = null;
+        if (profile?.customer) {
+          try {
+            defaultCustomer = await getDefaultCustomerFromProfile(profile);
+          } catch (err) {
+            console.error("Failed to fetch default customer from cache:", err);
+          }
+        }
+
+        const customerData = defaultCustomer ? {
+            id: defaultCustomer.name,
+            name: defaultCustomer.customer_name,
+            phone: defaultCustomer.mobile_number,
+          } : null;
+
         set({
           posProfile: profile,
           profileLoading: false,
           currency: profile.currency || 'INR',
-          defaultCustomer: null,
-          selectedCustomer: null,
+          defaultCustomer: customerData,
+          selectedCustomer: customerData,
         });
         if (!storage.getItem('currencySymbol')) {
           await get().fetchCurrencySymbol();
