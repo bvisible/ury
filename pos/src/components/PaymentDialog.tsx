@@ -57,11 +57,45 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
   const [selectedPaymentMode, setSelectedPaymentMode] = useState<string | null>(null);
   const [processorTransactions, setProcessorTransactions] = useState<{ [mode: string]: { transactionId: string, paymentIntentId?: string } }>({});
 
+  // localStorage key for draft payments
+  const STORAGE_KEY = `ury_pos_draft_payments_${invoice}`;
+
+  /**
+   * Load draft payments from localStorage on mount
+   */
   useEffect(() => {
     fetchPaymentModes();
     fetchPaymentProcessorConfigs();
+
+    // Load saved payments from localStorage
+    try {
+      const savedData = localStorage.getItem(STORAGE_KEY);
+      if (savedData) {
+        const { paymentInputs: savedInputs, processorTransactions: savedTransactions } = JSON.parse(savedData);
+        if (savedInputs) setPaymentInputs(savedInputs);
+        if (savedTransactions) setProcessorTransactions(savedTransactions);
+      }
+    } catch (error) {
+      console.error('Failed to load draft payments:', error);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  /**
+   * Save draft payments to localStorage when they change
+   */
+  useEffect(() => {
+    try {
+      if (Object.keys(paymentInputs).length > 0 || Object.keys(processorTransactions).length > 0) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          paymentInputs,
+          processorTransactions
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to save draft payments:', error);
+    }
+  }, [paymentInputs, processorTransactions, STORAGE_KEY]);
 
   // Calculate split payment total
   const payments = paymentModes
@@ -260,6 +294,14 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
         pos_profile: posProfile,
         table,
       });
+
+      // Clear draft payments from localStorage after successful payment
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch (error) {
+        console.error('Failed to clear draft payments:', error);
+      }
+
       // Show toast and reload orders (assume showToast and reload available globally)
       if (typeof window !== 'undefined' && (window as any).showToast) {
         (window as any).showToast.success('Payment successful');
