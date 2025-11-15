@@ -187,12 +187,12 @@ const canTransition = (from: TerminalState, to: TerminalState): boolean => {
 const transitionTo = (newState: TerminalState): void => {
   if (!canTransition(state.currentState, newState)) {
     console.warn(
-      `[StripeTerminalBridge] Invalid state transition: ${state.currentState} -> ${newState}`
+      `[STRIPE-FSM] ⚠️ Invalid transition: ${state.currentState} -> ${newState}`
     );
     // Allow transition anyway but log warning
   }
 
-  console.log(`[StripeTerminalBridge] State transition: ${state.currentState} -> ${newState}`);
+  console.log(`[STRIPE-FSM] ${state.currentState} → ${newState}`);
   state.currentState = newState;
 };
 
@@ -560,29 +560,44 @@ export const clearReaderDisplay = async (): Promise<void> => {
  * @param clientSecret - Payment intent client secret
  */
 export const processPayment = async (clientSecret: string): Promise<PaymentIntent> => {
+  console.log('[STRIPE-PAYMENT] 🚀 START', {
+    hasClientSecret: !!clientSecret,
+    secretPreview: clientSecret?.substring(0, 20) + '...',
+    currentState: state.currentState,
+    hasTerminal: !!state.terminal,
+    hasReader: !!state.connectedReader
+  });
+
   try {
     if (!state.terminal) {
+      console.error('[STRIPE-PAYMENT] ❌ Terminal not initialized');
       throw new Error('Terminal not initialized');
     }
 
     if (!state.connectedReader) {
+      console.error('[STRIPE-PAYMENT] ❌ No reader connected');
       throw new Error('No reader connected');
     }
 
     transitionTo('processing');
 
-    console.log('[StripeTerminalBridge] Collecting payment method...');
     state.isProcessing = true;
 
     // Check if using simulated terminal
     const isSimulated = state.connectedReader.device_type === 'simulated_reader' ||
                         state.connectedReader.id === 'SIMULATOR';
 
+    const mode = isSimulated ? '🤖 SIMULATION' : '💳 REAL';
+    console.log('[STRIPE-PAYMENT] Mode detected:', mode, {
+      device_type: state.connectedReader.device_type,
+      reader_id: state.connectedReader.id
+    });
+
     if (isSimulated) {
-      // SIMULATED PAYMENT FLOW - Skip Stripe SDK calls
-      console.log('[StripeTerminalBridge] Simulated payment - skipping SDK calls');
+      console.log('[STRIPE-PAYMENT] 🤖 SIMULATION MODE - Creating fake PaymentIntent');
 
       // Simulate 2-second processing delay
+      console.log('[STRIPE-PAYMENT] ⏳ Simulating 2-second processing delay...');
       await new Promise(resolve => setTimeout(resolve, 2000));
 
       // Create fake payment intent
@@ -600,12 +615,18 @@ export const processPayment = async (clientSecret: string): Promise<PaymentInten
       state.errorCount = 0;
       transitionTo('connected');
 
-      console.log('[StripeTerminalBridge] Simulated payment succeeded:', fakePaymentIntent);
+      console.log('[STRIPE-PAYMENT] ✅ 🤖 Simulated payment SUCCESS', {
+        payment_intent_id: fakePaymentIntent.id,
+        status: fakePaymentIntent.status
+      });
 
       return fakePaymentIntent;
     }
 
     // REAL TERMINAL PAYMENT FLOW
+    console.log('[STRIPE-PAYMENT] 💳 REAL MODE - Starting SDK payment flow');
+    console.log('[STRIPE-PAYMENT] 📲 Collecting payment method from terminal...');
+
     // Collect payment method
     const collectResult = await state.terminal.collectPaymentMethod(clientSecret, {
       config_override: {
@@ -615,13 +636,17 @@ export const processPayment = async (clientSecret: string): Promise<PaymentInten
 
     // Check if collection was cancelled
     if (!collectResult || !collectResult.paymentIntent) {
-      console.log('[StripeTerminalBridge] Payment method collection was cancelled');
+      console.warn('[STRIPE-PAYMENT] ⚠️ Payment method collection was cancelled');
       state.isProcessing = false;
       transitionTo('connected');
       throw new Error('Payment collection was cancelled');
     }
 
-    console.log('[StripeTerminalBridge] Payment method collected, processing payment...');
+    console.log('[STRIPE-PAYMENT] ✅ Payment method collected', {
+      payment_intent_id: collectResult.paymentIntent.id
+    });
+
+    console.log('[STRIPE-PAYMENT] ⚡ Processing payment with Stripe SDK...');
 
     // Process payment
     const processResult = await state.terminal.processPayment(collectResult.paymentIntent);
@@ -631,11 +656,20 @@ export const processPayment = async (clientSecret: string): Promise<PaymentInten
 
     transitionTo('connected');
 
-    console.log('[StripeTerminalBridge] Payment processed successfully:', processResult.paymentIntent);
+    console.log('[STRIPE-PAYMENT] ✅ 💳 Real payment SUCCESS', {
+      payment_intent_id: processResult.paymentIntent.id,
+      status: processResult.paymentIntent.status,
+      amount: processResult.paymentIntent.amount,
+      currency: processResult.paymentIntent.currency
+    });
 
     return processResult.paymentIntent;
   } catch (error) {
-    console.error('[StripeTerminalBridge] Payment processing error:', error);
+    console.error('[STRIPE-PAYMENT] ❌ ERROR', {
+      error,
+      message: error instanceof Error ? error.message : 'Unknown error',
+      currentState: state.currentState
+    });
     state.isProcessing = false;
     state.lastError = error instanceof Error ? error.message : 'Unknown error';
     state.errorCount++;

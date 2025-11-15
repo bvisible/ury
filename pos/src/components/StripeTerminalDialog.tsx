@@ -171,6 +171,11 @@ const StripeTerminalDialog: React.FC<StripeTerminalDialogProps> = ({
    * Handle amount confirmation and process payment
    */
   const handleAmountConfirm = async (confirmedAmount: number) => {
+    console.log('[STRIPE-UI] 💰 Amount confirmed', {
+      amount: confirmedAmount,
+      currency,
+      terminal: selectedTerminal?.label
+    });
     setAmount(confirmedAmount);
     // Start processing payment
     await handleProcessPayment(confirmedAmount);
@@ -180,6 +185,11 @@ const StripeTerminalDialog: React.FC<StripeTerminalDialogProps> = ({
    * Handle terminal selection
    */
   const handleTerminalSelect = (reader: any) => {
+    console.log('[STRIPE-UI] 🎯 Terminal selected', {
+      terminal: reader.label,
+      device_type: reader.device_type,
+      id: reader.id
+    });
     setSelectedTerminal(reader);
   };
 
@@ -206,7 +216,16 @@ const StripeTerminalDialog: React.FC<StripeTerminalDialogProps> = ({
    * 7. Handle success/error
    */
   const handleProcessPayment = async (paymentAmount: number) => {
+    const mode = simulationMode ? '🤖 SIMULATION' : '💳 REAL';
+    console.log('[STRIPE-UI] 🚀 handleProcessPayment START', {
+      mode,
+      amount: paymentAmount,
+      terminal: selectedTerminal?.label,
+      currency
+    });
+
     if (!selectedTerminal) {
+      console.error('[STRIPE-UI] ❌ No terminal selected');
       setError(_('Veuillez sélectionner un terminal'));
       return;
     }
@@ -217,12 +236,13 @@ const StripeTerminalDialog: React.FC<StripeTerminalDialogProps> = ({
 
     try {
       // Step 1 & 2: Connect to terminal
-      console.log('[handleProcessPayment] Connecting to terminal:', selectedTerminal.label);
+      console.log('[STRIPE-UI] 🔌 Connecting to terminal:', selectedTerminal.label);
       await StripeBridge.connectToReader(selectedTerminal);
+      console.log('[STRIPE-UI] ✅ Terminal connected');
 
       // Step 3: Configure simulator if in simulation mode
       if (simulationMode && selectedTerminal.device_type === 'simulated') {
-        console.log('[handleProcessPayment] Configuring simulator for success...');
+        console.log('[STRIPE-UI] 🤖 Configuring simulator for success...');
         const terminal = StripeBridge.getState().terminal;
         if (terminal && terminal.setSimulatorConfiguration) {
           terminal.setSimulatorConfiguration({
@@ -232,16 +252,16 @@ const StripeTerminalDialog: React.FC<StripeTerminalDialogProps> = ({
       }
 
       // Step 4: Create payment intent
-      console.log('[handleProcessPayment] Creating payment intent...');
+      console.log('[STRIPE-UI] 💰 Creating payment intent...');
       const terminalId = (selectedTerminal as any).erpnextName || selectedTerminal.label;
 
-      console.log('[handleProcessPayment] Payment details:', {
+      console.log('[STRIPE-UI] 📤 Payment intent request', {
         amount: paymentAmount,
         currency,
         referenceDoctype,
         referenceDocname,
         terminalId,
-        simulationMode
+        mode
       });
 
       const paymentIntent = await createPaymentIntent(
@@ -253,17 +273,26 @@ const StripeTerminalDialog: React.FC<StripeTerminalDialogProps> = ({
         terminalId
       );
 
-      console.log('[handleProcessPayment] Payment intent created:', paymentIntent);
+      console.log('[STRIPE-UI] ✅ Payment intent created', {
+        payment_intent_id: paymentIntent.payment_intent_id,
+        hasClientSecret: !!paymentIntent.client_secret
+      });
 
       if (!paymentIntent.client_secret) {
+        console.error('[STRIPE-UI] ❌ Missing client_secret in payment intent');
         throw new Error(_('Échec de création de l\'intention de paiement - secret client manquant'));
       }
 
       // Step 5 & 6: Collect payment method and process payment
-      console.log('[handleProcessPayment] Processing payment with terminal...');
+      console.log('[STRIPE-UI] 📲 Processing payment with terminal...');
       const result = await StripeBridge.processPayment(paymentIntent.client_secret);
 
-      console.log('[handleProcessPayment] Payment result:', result);
+      console.log('[STRIPE-UI] ✅ Payment result received', {
+        payment_intent_id: result.id,
+        status: result.status,
+        amount: result.amount,
+        currency: result.currency
+      });
 
       // Extract transaction ID from result
       const transactionId = result.charges?.data[0]?.id || paymentIntent.transaction_id || result.id;
@@ -287,7 +316,12 @@ const StripeTerminalDialog: React.FC<StripeTerminalDialogProps> = ({
         onClose();
       }, 2000);
     } catch (error: any) {
-      console.error('[handleProcessPayment] Payment processing error:', error);
+      console.error('[STRIPE-UI] ❌ handleProcessPayment ERROR', {
+        error,
+        message: error.message,
+        httpStatus: error.httpStatus,
+        exc_type: error.exc_type
+      });
 
       // Translate common errors to French
       let errorMessage = error.message || _('Le paiement a échoué. Veuillez réessayer.');

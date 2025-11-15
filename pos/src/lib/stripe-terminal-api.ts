@@ -60,31 +60,33 @@ export interface TerminalStatus {
  * Loads the stripe_terminal_handler.js script if not already loaded
  */
 export const initializeStripeSDK = async (): Promise<boolean> => {
+  console.log('[STRIPE] 🔧 initializeStripeSDK START');
+
   try {
     // Check if SDK is already loaded
     if (window.neopay_integration && window.neopay_integration.terminal) {
-      console.log('Stripe Terminal SDK already loaded');
+      console.log('[STRIPE] ✅ SDK already loaded');
       return true;
     }
 
-    console.log('Loading stripe_terminal_handler.js');
+    console.log('[STRIPE] 📦 Loading stripe_terminal_handler.js from /assets/neopay_integration/js/');
 
     // Load the SDK script
     await new Promise<void>((resolve, reject) => {
       // Check if script is already in DOM
       if (document.querySelector('script[src*="stripe_terminal_handler.js"]')) {
-        console.log('Script stripe_terminal_handler.js already in DOM');
+        console.log('[STRIPE] ✅ Script already in DOM');
         return resolve();
       }
 
       const script = document.createElement('script');
       script.src = '/assets/neopay_integration/js/stripe_terminal_handler.js';
       script.onload = () => {
-        console.log('stripe_terminal_handler.js loaded successfully');
+        console.log('[STRIPE] ✅ stripe_terminal_handler.js loaded successfully');
         resolve();
       };
       script.onerror = (err) => {
-        console.error('Error loading stripe_terminal_handler.js:', err);
+        console.error('[STRIPE] ❌ Error loading stripe_terminal_handler.js:', err);
         reject(new Error('Failed to load Stripe Terminal SDK'));
       };
       document.head.appendChild(script);
@@ -92,12 +94,14 @@ export const initializeStripeSDK = async (): Promise<boolean> => {
 
     // Verify SDK is available
     if (!window.neopay_integration || !window.neopay_integration.terminal) {
+      console.error('[STRIPE] ❌ SDK loaded but neopay_integration.terminal not available');
       throw new Error('Stripe Terminal SDK loaded but neopay_integration.terminal is not available');
     }
 
+    console.log('[STRIPE] ✅ initializeStripeSDK SUCCESS');
     return true;
   } catch (error) {
-    console.error('Error initializing Stripe Terminal SDK:', error);
+    console.error('[STRIPE] ❌ initializeStripeSDK ERROR:', error);
     throw error;
   }
 };
@@ -106,14 +110,19 @@ export const initializeStripeSDK = async (): Promise<boolean> => {
  * Get connection token for Stripe Terminal SDK
  */
 export const getConnectionToken = async (terminal: string): Promise<string> => {
+  console.log('[STRIPE] 🔑 getConnectionToken START', { terminal });
   try {
     const response = await call.post('neopay_integration.api.get_connection_token', {
       terminal: terminal
     });
+    console.log('[STRIPE] ✅ getConnectionToken SUCCESS', {
+      hasMessage: !!response.message,
+      secretPreview: (response.message || response)?.substring(0, 15) + '...'
+    });
     // Backend returns the secret string directly, not wrapped in message
     return response.message || response;
   } catch (error) {
-    console.error('Failed to get connection token:', error);
+    console.error('[STRIPE] ❌ getConnectionToken ERROR', { terminal, error });
     throw error;
   }
 };
@@ -158,22 +167,23 @@ export const createPaymentIntent = async (
   description?: string,
   terminalId?: string
 ): Promise<PaymentIntentResponse> => {
-  try {
-    console.log('[createPaymentIntent] Called with params:', {
-      amount,
-      currency,
-      referenceDoctype,
-      referenceDocname,
-      description,
-      terminalId
-    });
+  console.log('[STRIPE] 💰 createPaymentIntent START', {
+    amount,
+    currency,
+    terminalId,
+    referenceDoctype,
+    referenceDocname
+  });
 
+  try {
     // Validate terminal ID
     if (!terminalId) {
+      console.error('[STRIPE] ❌ Terminal ID missing');
       throw new Error(_('L\'ID du terminal est requis'));
     }
 
     // Validate amount
+    console.log('[STRIPE] 🔍 Validating amount', { amount, currency });
     validatePaymentAmount(amount, currency);
 
     // Backend accepts: terminal_id, amount (in cents), currency
@@ -183,14 +193,20 @@ export const createPaymentIntent = async (
       currency: currency.toLowerCase()
     };
 
-    console.log('[createPaymentIntent] Request data:', requestData);
-    console.log('[createPaymentIntent] Making API call to neopay_integration.api.create_payment_intent');
+    console.log('[STRIPE] 📤 API Request', {
+      endpoint: 'neopay_integration.api.create_payment_intent',
+      requestData
+    });
 
     const response = await call.post('neopay_integration.api.create_payment_intent', requestData);
 
-    console.log('[createPaymentIntent] API response:', response);
+    console.log('[STRIPE] 📥 API Response received', {
+      hasMessage: !!response.message,
+      responseKeys: Object.keys(response.message || response)
+    });
 
     if (!response.message) {
+      console.error('[STRIPE] ❌ Invalid server response - no message field');
       throw new Error(_('Réponse invalide du serveur'));
     }
 
@@ -198,18 +214,30 @@ export const createPaymentIntent = async (
 
     // Validate response has required fields
     if (!result.client_secret) {
+      console.error('[STRIPE] ❌ Missing client_secret in response');
       throw new Error(_('Secret client manquant dans la réponse'));
     }
 
     if (!result.payment_intent_id) {
+      console.error('[STRIPE] ❌ Missing payment_intent_id in response');
       throw new Error(_('ID d\'intention de paiement manquant'));
     }
 
+    console.log('[STRIPE] ✅ createPaymentIntent SUCCESS', {
+      payment_intent_id: result.payment_intent_id,
+      transaction_id: result.transaction_id,
+      hasClientSecret: !!result.client_secret
+    });
+
     return result;
   } catch (error: any) {
-    console.error('[createPaymentIntent] Error caught:', error);
-    console.error('[createPaymentIntent] Error type:', typeof error);
-    console.error('[createPaymentIntent] Error details:', error);
+    console.error('[STRIPE] ❌ createPaymentIntent ERROR', {
+      error,
+      httpStatus: error.httpStatus,
+      exc_type: error.exc_type,
+      message: error.message,
+      stack: error.stack
+    });
 
     // Translate common Stripe errors to French
     let errorMessage = error.message || _('Échec de création de l\'intention de paiement');
@@ -308,14 +336,22 @@ export const updateTransactionStatus = async (
   status: string,
   simulated: boolean = false
 ): Promise<void> => {
+  const simFlag = simulated ? '🤖 SIMULATION' : '💳 REAL';
+  console.log('[STRIPE] 🔄 updateTransactionStatus START', {
+    paymentIntentId,
+    status,
+    mode: simFlag
+  });
+
   try {
     await call.post('neopay_integration.api.update_transaction_status', {
       payment_intent_id: paymentIntentId,
       status: status,
       simulated: simulated
     });
+    console.log('[STRIPE] ✅ updateTransactionStatus SUCCESS', { status, mode: simFlag });
   } catch (error) {
-    console.error('Failed to update transaction status:', error);
+    console.error('[STRIPE] ❌ updateTransactionStatus ERROR', { error, paymentIntentId, status });
     throw error;
   }
 };
@@ -395,28 +431,36 @@ export const getTerminalInfo = async (terminalId: string): Promise<any> => {
  * @returns Promise<boolean> - Success status
  */
 export const connectToTerminal = async (terminalId: string): Promise<boolean> => {
+  console.log('[STRIPE] 🔌 connectToTerminal START', { terminalId });
+
   try {
     // Ensure SDK is initialized
     await initializeStripeSDK();
 
-    console.log('Connecting to terminal:', terminalId);
-
     // Verify terminal exists
+    console.log('[STRIPE] 🔍 Verifying terminal exists:', terminalId);
     const terminalInfo = await getTerminalInfo(terminalId);
     if (!terminalInfo) {
+      console.error('[STRIPE] ❌ Terminal not found:', terminalId);
       throw new Error(`Terminal not found: ${terminalId}`);
     }
+    console.log('[STRIPE] ✅ Terminal found', {
+      label: terminalInfo.label,
+      device_type: terminalInfo.device_type
+    });
 
     // Initialize the terminal instance
+    console.log('[STRIPE] 🔧 Initializing terminal instance...');
     window.stripeTerminalInstance = await window.neopay_integration!.terminal.init(terminalId);
 
     // Connect to the terminal
+    console.log('[STRIPE] 🔗 Connecting to terminal...');
     await window.neopay_integration!.terminal.connect(window.stripeTerminalInstance);
 
-    console.log('Successfully connected to terminal:', terminalId);
+    console.log('[STRIPE] ✅ connectToTerminal SUCCESS', { terminalId });
     return true;
   } catch (error) {
-    console.error('Failed to connect to terminal:', error);
+    console.error('[STRIPE] ❌ connectToTerminal ERROR', { terminalId, error });
     throw error;
   }
 };
@@ -427,12 +471,18 @@ export const connectToTerminal = async (terminalId: string): Promise<boolean> =>
  * @returns Promise<any> - Payment result
  */
 export const processPaymentWithTerminal = async (clientSecret: string): Promise<any> => {
+  console.log('[STRIPE] 💳 processPaymentWithTerminal START', {
+    hasClientSecret: !!clientSecret,
+    secretPreview: clientSecret?.substring(0, 20) + '...'
+  });
+
   try {
     if (!window.stripeTerminalInstance) {
+      console.error('[STRIPE] ❌ No terminal connected');
       throw new Error('No terminal connected. Please connect to a terminal first.');
     }
 
-    console.log('Collecting payment method from terminal...');
+    console.log('[STRIPE] 📲 Collecting payment method from terminal...');
 
     // Collect payment method
     const paymentMethod = await window.neopay_integration!.terminal.collectPaymentMethod(
@@ -440,7 +490,9 @@ export const processPaymentWithTerminal = async (clientSecret: string): Promise<
       clientSecret
     );
 
-    console.log('Processing payment...');
+    console.log('[STRIPE] ✅ Payment method collected', { paymentMethod });
+
+    console.log('[STRIPE] ⚡ Processing payment...');
 
     // Process the payment
     const result = await window.neopay_integration!.terminal.processPayment(
@@ -448,10 +500,10 @@ export const processPaymentWithTerminal = async (clientSecret: string): Promise<
       paymentMethod
     );
 
-    console.log('Payment processed successfully:', result);
+    console.log('[STRIPE] ✅ processPaymentWithTerminal SUCCESS', { result });
     return result;
   } catch (error) {
-    console.error('Failed to process payment with terminal:', error);
+    console.error('[STRIPE] ❌ processPaymentWithTerminal ERROR', { error });
     throw error;
   }
 };
