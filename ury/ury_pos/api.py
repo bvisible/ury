@@ -506,6 +506,8 @@ def getPosProfile():
             owner = get_cashier.applicable_for_users[0].user
         
         qz_print = pos_profiles.qz_print
+        cloudprnt_printer = pos_profiles.get("cloudprnt_printer", 0)
+        cloudprnt_printer_name = pos_profiles.get("cloudprnt_printer_name") if cloudprnt_printer else None
         print_type = None
 
         for pos_profile in pos_profiles.printer_settings:
@@ -514,7 +516,11 @@ def getPosProfile():
                 bill_present = True
                 break
 
-        if qz_print == 1:
+        # Determine print type priority: CloudPRNT > QZ > Network > Socket
+        if cloudprnt_printer and cloudprnt_printer_name:
+            print_type = "cloudprnt"
+
+        elif qz_print == 1:
             print_type = "qz"
             qz_host = pos_profiles.qz_host
 
@@ -534,6 +540,8 @@ def getPosProfile():
         "print_format": print_format,
         "qz_print": qz_print,
         "qz_host": qz_host,
+        "cloudprnt_printer": cloudprnt_printer,
+        "cloudprnt_printer_name": cloudprnt_printer_name,
         "printer": printer,
         "print_type": print_type,
         "tableAttention": tableAttention,

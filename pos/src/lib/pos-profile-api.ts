@@ -12,6 +12,8 @@ export interface PosProfileLimited {
   print_format: string | null;
   qz_print: number;
   qz_host: string | null;
+  cloudprnt_printer: number;
+  cloudprnt_printer_name: string | null;
   printer: string | null;
   print_type: string;
   tableAttention: number;
@@ -74,6 +76,8 @@ export interface PosProfileCombined extends PosProfileFull {
   print_format: string | null;
   qz_print: number;
   qz_host: string | null;
+  cloudprnt_printer: number;
+  cloudprnt_printer_name: string | null;
   printer: string | null;
   print_type: string;
   tableAttention: number;
