@@ -9,6 +9,7 @@ import PaymentAmountDialog from './PaymentAmountDialog';
 import {
   getAvailableTerminals,
   createPaymentIntent,
+  updateTransactionStatus,
   StripeTerminal,
   PaymentIntentResponse
 } from '../lib/stripe-terminal-api';
@@ -304,7 +305,22 @@ const StripeTerminalDialog: React.FC<StripeTerminalDialogProps> = ({
       // Extract transaction ID from result
       const transactionId = result.charges?.data[0]?.id || paymentIntent.transaction_id || result.id;
 
-      // Step 7: Payment successful
+      // Check if this is a simulated payment
+      const isSimulated = result.id?.startsWith('pi_simulated_') || simulationMode;
+
+      // Step 7: Update transaction status in backend (especially for simulated payments)
+      if (isSimulated && paymentIntent.payment_intent_id) {
+        console.log('[STRIPE-UI] 🤖 Updating simulated transaction status to Captured...');
+        try {
+          await updateTransactionStatus(paymentIntent.payment_intent_id, 'Captured', false, true);
+          console.log('[STRIPE-UI] ✅ Simulated transaction status updated');
+        } catch (error) {
+          console.error('[STRIPE-UI] ⚠️ Failed to update transaction status:', error);
+          // Don't fail the payment if status update fails
+        }
+      }
+
+      // Step 8: Payment successful
       setPaymentResult({
         success: true,
         payment_intent_id: result.id,
