@@ -19,7 +19,10 @@ def cloudprnt_print_invoice(invoice_name, printer=None):
 		# Import CloudPRNT API
 		from cloudprnt.api import print_pos_invoice
 	except ImportError:
-		frappe.throw(_("CloudPRNT app is not installed"))
+		return {
+			"success": False,
+			"message": _("CloudPRNT app is not installed")
+		}
 
 	# Get printer name if not provided
 	if not printer:
