@@ -59,13 +59,8 @@ const PaymentAmountDialog: React.FC<PaymentAmountDialogProps> = ({
       newAmount = (amount * 100 * 10 + digitValue) / 100;
     }
 
-    // Validate against max amount
-    if (newAmount <= maxAmount) {
-      setAmount(newAmount);
-    } else {
-      // Set to max amount if exceeded
-      setAmount(maxAmount);
-    }
+    // No maximum validation - allow tips/extra amounts
+    setAmount(newAmount);
   };
 
   /**
@@ -91,10 +86,19 @@ const PaymentAmountDialog: React.FC<PaymentAmountDialogProps> = ({
    * Handle confirm
    */
   const handleConfirm = () => {
-    if (amount > 0 && amount <= maxAmount) {
+    if (amount > 0) {
       onConfirm(amount);
       // Don't call onClose() - let the parent dialog handle state transitions
     }
+  };
+
+  /**
+   * Handle direct input change
+   */
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/[^\d.]/g, ''); // Only digits and decimal point
+    const numValue = parseFloat(value) || 0;
+    setAmount(numValue);
   };
 
   /**
@@ -138,11 +142,15 @@ const PaymentAmountDialog: React.FC<PaymentAmountDialogProps> = ({
             <div className="text-sm text-gray-600 mb-1">
               {__('Amount to pay')}
             </div>
-            <div className="text-4xl font-bold text-gray-900 font-mono">
-              {currency} {amount.toFixed(2)}
-            </div>
+            <input
+              type="text"
+              value={amount.toFixed(2)}
+              onChange={handleInputChange}
+              className="w-full text-4xl font-bold text-gray-900 font-mono bg-transparent border-none focus:outline-none focus:ring-0 p-0"
+              placeholder="0.00"
+            />
             <div className="text-sm text-gray-500 mt-2">
-              {__('Maximum')}: {formatCurrency(maxAmount, currency)}
+              {__('Amount due (for info)')}: {formatCurrency(maxAmount, currency)}
             </div>
           </div>
 
@@ -186,10 +194,10 @@ const PaymentAmountDialog: React.FC<PaymentAmountDialogProps> = ({
             </Button>
             <Button
               onClick={handleConfirm}
-              disabled={amount <= 0 || amount > maxAmount}
+              disabled={amount <= 0}
               className={cn(
                 "h-12 text-lg font-semibold",
-                amount > 0 && amount <= maxAmount
+                amount > 0
                   ? "bg-green-600 hover:bg-green-700 text-white"
                   : "bg-gray-300 text-gray-500 cursor-not-allowed"
               )}

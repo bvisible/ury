@@ -26,7 +26,7 @@ const TableIcon = ({ type, className }: { type: 'Circle' | 'Square' | 'Rectangle
 };
 
 const TableSelectionDialog: React.FC<Props> = ({ onClose }) => {
-  const { selectedTable, setSelectedTable, posProfile, setSelectedCustomer } = usePOSStore();
+  const { selectedTable, setSelectedTable, posProfile } = usePOSStore();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [tables, setTables] = useState<Table[]>([]);
   const [tablesCache, setTablesCache] = useState<Record<string, Table[]>>({});
@@ -171,52 +171,10 @@ const TableSelectionDialog: React.FC<Props> = ({ onClose }) => {
               {tables.map(table => (
                 <Button
                   key={table.name}
-                  onClick={(e) => {
-                    console.error('[TableSelection] ============ IMMEDIATE CLICK FIRED!', table.name);
-                    e.stopPropagation();
-
-                    // Execute async logic
-                    (async () => {
-                      console.error('[TableSelection] ============ TABLE CLICKED:', table.name);
-                      // Set default customer from POS Profile BEFORE setting table
-                      if (posProfile?.customer) {
-                        console.log('[TableSelection] POS Profile customer:', posProfile.customer);
-                        try {
-                          // Fetch customer details to get phone number
-                          const { db } = await import('../lib/frappe-sdk');
-                          const customerDoc: any = await db.getDoc('Customer', posProfile.customer);
-                          console.log('[TableSelection] Customer doc fetched:', customerDoc);
-                          const customerData = {
-                            id: customerDoc.name || posProfile.customer,
-                            name: customerDoc.customer_name || customerDoc.name || posProfile.customer,
-                            phone: customerDoc.mobile_number || '',
-                          };
-                          console.log('[TableSelection] Setting customer:', customerData);
-                          setSelectedCustomer(customerData);
-                          console.log('[TableSelection] Customer set successfully');
-                        } catch (error) {
-                          console.error('[TableSelection] Error fetching customer:', error);
-                          // Fallback to basic customer info
-                          const fallbackData = {
-                            id: posProfile.customer,
-                            name: posProfile.customer,
-                            phone: '',
-                          };
-                          console.log('[TableSelection] Setting fallback customer:', fallbackData);
-                          setSelectedCustomer(fallbackData);
-                        }
-                      } else {
-                        console.log('[TableSelection] No customer in POS Profile');
-                      }
-
-                      // Set table after customer is set
-                      console.error('[TableSelection] About to set table and call onClose');
-                      // Load existing order if table has one (allows adding items to existing orders)
-                      setSelectedTable(table.name, selectedRoom, false);
-                      console.error('[TableSelection] Calling onClose NOW');
-                      onClose();
-                      console.error('[TableSelection] onClose called');
-                    })();
+                  onClick={() => {
+                    // Load existing order if table has one (allows adding items to existing orders)
+                    setSelectedTable(table.name, selectedRoom, false);
+                    onClose();
                   }}
                   variant="outline"
                   className={cn(

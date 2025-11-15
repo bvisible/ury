@@ -159,17 +159,21 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
    */
   const handleStripeTerminalSuccess = (amount: number, transactionId: string, paymentIntentId: string) => {
     if (selectedPaymentMode) {
-      // Store transaction reference
+      // Store transaction reference (keep latest transaction)
       setProcessorTransactions(prev => ({
         ...prev,
         [selectedPaymentMode]: { transactionId, paymentIntentId }
       }));
 
-      // Auto-fill the payment input with the amount
-      setPaymentInputs(inputs => ({
-        ...inputs,
-        [selectedPaymentMode]: String(amount)
-      }));
+      // Add to existing amount instead of replacing it
+      setPaymentInputs(inputs => {
+        const currentAmount = parseFloat(inputs[selectedPaymentMode] || '0');
+        const newTotal = currentAmount + amount;
+        return {
+          ...inputs,
+          [selectedPaymentMode]: newTotal.toFixed(2)
+        };
+      });
 
       // Add to processor payments tracking
       addProcessorPayment({
@@ -191,17 +195,21 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
    */
   const handleTwintSuccess = (amount: number, transactionId: string) => {
     if (selectedPaymentMode) {
-      // Store transaction reference
+      // Store transaction reference (keep latest transaction)
       setProcessorTransactions(prev => ({
         ...prev,
         [selectedPaymentMode]: { transactionId }
       }));
 
-      // Auto-fill the payment input with the amount
-      setPaymentInputs(inputs => ({
-        ...inputs,
-        [selectedPaymentMode]: String(amount)
-      }));
+      // Add to existing amount instead of replacing it
+      setPaymentInputs(inputs => {
+        const currentAmount = parseFloat(inputs[selectedPaymentMode] || '0');
+        const newTotal = currentAmount + amount;
+        return {
+          ...inputs,
+          [selectedPaymentMode]: newTotal.toFixed(2)
+        };
+      });
 
       // Add to processor payments tracking
       addProcessorPayment({
@@ -378,8 +386,8 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
                       readOnly={isSpecialMode}
                     />
 
-                    {/* Special payment mode button */}
-                    {isSpecialMode && !hasProcessorTransaction && (
+                    {/* Special payment mode button - always visible for multiple payments */}
+                    {isSpecialMode && (
                       <Button
                         onClick={() => handlePaymentModeClick(id)}
                         variant="outline"

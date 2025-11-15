@@ -4,7 +4,7 @@ import { storage } from '../lib/storage';
 import { getRestaurantMenu, getAggregatorMenu, MenuItem as APIMenuItem } from '../lib/menu-api';
 import { getCurrencyInfo, PosProfileCombined, getCombinedPosProfile } from '../lib/pos-profile-api';
 import { getMenuCourses } from '../lib/menu-course-api';
-import { getCustomerGroups, getCustomerTerritories } from '../lib/customer-api';
+import { getCustomerGroups, getCustomerTerritories, getDefaultCustomerFromProfile } from '../lib/customer-api';
 import { DEFAULT_ORDER_TYPE, OrderType } from '../data/order-types';
 import { getTableOrder, TableOrder } from '../lib/order-api';
 import { getPaymentModes } from '../lib/payment-api';
@@ -119,6 +119,7 @@ interface POSState {
   selectedRoom: string | null;
   searchQuery: string;
   selectedCustomer: Customer | null;
+  defaultCustomer: Customer | null;
   selectedOrderType: OrderType;
   quickFilter: 'all' | 'special';
   selectedItem: MenuItem | null;
@@ -211,6 +212,7 @@ export const usePOSStore = create<POSStore>((set, get) => ({
   selectedRoom: null,
   searchQuery: '',
   selectedCustomer: null,
+  defaultCustomer: null,
   selectedOrderType: DEFAULT_ORDER_TYPE as OrderType,
   quickFilter: "all",
   selectedItem: null,
@@ -274,10 +276,12 @@ export const usePOSStore = create<POSStore>((set, get) => ({
       const cached = sessionStorage.getItem('posProfile');
       if (cached) {
         const profile = JSON.parse(cached);
-        set({ 
-          posProfile: profile, 
+        set({
+          posProfile: profile,
           profileLoading: false,
-          currency: profile.currency || 'INR'
+          currency: profile.currency || 'INR',
+          defaultCustomer: null,
+          selectedCustomer: null,
         });
         if (!storage.getItem('currencySymbol')) {
           await get().fetchCurrencySymbol();
@@ -287,22 +291,40 @@ export const usePOSStore = create<POSStore>((set, get) => ({
 
       set({ profileLoading: true, error: null });
       const combinedProfile = await getCombinedPosProfile();
-      
+
       sessionStorage.setItem('posProfile', JSON.stringify(combinedProfile));
-      set({ 
-        posProfile: combinedProfile, 
+
+      let defaultCustomer = null;
+      if (combinedProfile?.customer) {
+        try {
+          defaultCustomer = await getDefaultCustomerFromProfile(combinedProfile);
+        } catch (err) {
+          console.error("Failed to fetch default customer:", err);
+        }
+      }
+
+      const customerData = defaultCustomer ? {
+          id: defaultCustomer.name,
+          name: defaultCustomer.customer_name,
+          phone: defaultCustomer.mobile_number,
+        } : null;
+
+      set({
+        posProfile: combinedProfile,
         profileLoading: false,
-        currency: combinedProfile.currency || 'INR'
+        currency: combinedProfile.currency || 'INR',
+        defaultCustomer: customerData,
+        selectedCustomer: customerData,
       });
-      
+
       if (!storage.getItem('currencySymbol')) {
         await get().fetchCurrencySymbol();
       }
     } catch (error) {
       console.error('Error fetching POS profile:', error);
-      set({ 
+      set({
         error: 'Failed to fetch POS profile',
-        profileLoading: false 
+        profileLoading: false
       });
     }
   },
@@ -669,12 +691,12 @@ export const usePOSStore = create<POSStore>((set, get) => ({
           orderId: order.name,
         });
       } else {
-        // Don't clear selectedCustomer if already set (e.g., from POS Profile default)
-        const currentCustomer = get().selectedCustomer;
+        // Restore default customer when no order exists
+        const { defaultCustomer } = get();
         set({
           tableOrder: null,
           activeOrders: [],
-          selectedCustomer: currentCustomer,
+          selectedCustomer: defaultCustomer || null,
           isUpdatingOrder: false,
           orderId: null,
         });
@@ -761,10 +783,10 @@ export const usePOSStore = create<POSStore>((set, get) => ({
   },
 
   resetOrderState: () => {
-    const { fetchMenuItems } = get();
-    
+    const { fetchMenuItems, defaultCustomer } = get();
+
     set({
-      selectedCustomer: null,
+      selectedCustomer: defaultCustomer || null,
       selectedTable: null,
       selectedRoom: null,
       selectedAggregator: null,

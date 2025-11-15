@@ -136,9 +136,16 @@ const StripeTerminalDialog: React.FC<StripeTerminalDialogProps> = ({
       const mappedTerminals = discoveredReaders.map(reader => {
         // Find matching ERPNext terminal by label
         const erpnextTerminal = erpnextTerminals.find(t => t.label === reader.label);
+
+        // In simulation mode, use first ERPNext terminal for backend API calls
+        // since simulated readers don't have matching ERPNext terminal names
+        const erpnextName = simulationMode && !erpnextTerminal
+          ? erpnextTerminals[0].name
+          : (erpnextTerminal?.name || reader.label);
+
         return {
           ...reader,
-          erpnextName: erpnextTerminal?.name || reader.label, // Use ERPNext name for API calls
+          erpnextName, // Use ERPNext name for API calls
           status: reader.device_type === 'simulated' ? 'online' : (reader.status || 'offline')
         };
       });
