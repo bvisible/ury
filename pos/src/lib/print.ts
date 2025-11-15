@@ -15,9 +15,14 @@ interface PrintOrderParams {
 }
 
 export async function printOrder({ orderId, posProfile }: PrintOrderParams): Promise<'qz' | 'network' | 'socket' | 'cloudprnt'> {
-  const { print_type, qz_host, print_format, printer, name, cashier, multiple_cashier, cloudprnt_printer_name } = posProfile;
+  const { print_type, qz_host, print_format, printer, name, cashier, multiple_cashier, cloudprnt_printer, cloudprnt_printer_name } = posProfile;
 
-  if (print_type === 'cloudprnt') {
+  // Check CloudPRNT first (based on cloudprnt_printer flag)
+  if (cloudprnt_printer && cloudprnt_printer_name) {
+    await cloudprntPrint(orderId, cloudprnt_printer_name);
+    await updatePrintStatus(orderId);
+    return 'cloudprnt';
+  } else if (print_type === 'cloudprnt') {
     await cloudprntPrint(orderId, cloudprnt_printer_name);
     await updatePrintStatus(orderId);
     return 'cloudprnt';
