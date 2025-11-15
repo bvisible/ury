@@ -4,7 +4,8 @@ import {
   networkPrint,
   selectNetworkPrinter,
   printPosPage,
-  updatePrintStatus
+  updatePrintStatus,
+  cloudprntPrint
 } from './invoice-api';
 import { PosProfileCombined } from './pos-profile-api';
 
@@ -13,10 +14,14 @@ interface PrintOrderParams {
   posProfile: PosProfileCombined
 }
 
-export async function printOrder({ orderId, posProfile }: PrintOrderParams): Promise<'qz' | 'network' | 'socket'> {
+export async function printOrder({ orderId, posProfile }: PrintOrderParams): Promise<'qz' | 'network' | 'socket' | 'cloudprnt'> {
   const { print_type, qz_host, print_format, printer, name, cashier, multiple_cashier } = posProfile;
 
-  if (print_type === 'qz') {
+  if (print_type === 'cloudprnt') {
+    await cloudprntPrint(orderId);
+    await updatePrintStatus(orderId);
+    return 'cloudprnt';
+  } else if (print_type === 'qz') {
     if (!qz_host) {
       throw new Error('QZ host is not set');
     }

@@ -168,4 +168,16 @@ export async function printPosPage(orderId: string, printFormat: string) {
 
 export async function updatePrintStatus(orderId: string) {
   await call.post('ury.ury.api.ury_print.qz_print_update', { invoice: orderId });
+}
+
+export async function cloudprntPrint(orderId: string) {
+  try {
+    const result = await call.post('ury.ury.api.ury_cloudprnt.cloudprnt_print_invoice', {
+      invoice_name: orderId
+    });
+    return result;
+  } catch (error) {
+    console.error('Error printing to CloudPRNT:', error);
+    throw error;
+  }
 } 
