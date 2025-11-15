@@ -170,11 +170,18 @@ export async function updatePrintStatus(orderId: string) {
   await call.post('ury.ury.api.ury_print.qz_print_update', { invoice: orderId });
 }
 
-export async function cloudprntPrint(orderId: string) {
+export async function cloudprntPrint(orderId: string, printer?: string | null) {
   try {
-    const result = await call.post('ury.ury.api.ury_cloudprnt.cloudprnt_print_invoice', {
+    const args: { invoice_name: string; printer?: string } = {
       invoice_name: orderId
-    });
+    };
+
+    // Pass printer parameter if provided
+    if (printer) {
+      args.printer = printer;
+    }
+
+    const result = await call.post('ury.ury.api.ury_cloudprnt.cloudprnt_print_invoice', args);
     return result;
   } catch (error) {
     console.error('Error printing to CloudPRNT:', error);

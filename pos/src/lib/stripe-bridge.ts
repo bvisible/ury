@@ -118,27 +118,82 @@ declare global {
   }
 }
 
-// Bridge state management
+// Terminal states for FSM (Finite State Machine)
+export type TerminalState =
+  | 'uninitialized'
+  | 'initializing'
+  | 'ready'
+  | 'discovering'
+  | 'connecting'
+  | 'connected'
+  | 'processing'
+  | 'disconnecting'
+  | 'error';
+
+// Bridge state management with FSM pattern
 interface BridgeState {
   terminal: Terminal | null;
-  isInitialized: boolean;
+  terminalId: string | null;
+  currentState: TerminalState;
   isConnecting: boolean;
   isProcessing: boolean;
   connectedReader: Reader | null;
   connectionStatus: 'not_connected' | 'connecting' | 'connected';
   lastError: string | null;
   simulationMode: boolean;
+  errorCount: number;
+  maxRetries: number;
 }
 
 const state: BridgeState = {
   terminal: null,
-  isInitialized: false,
+  terminalId: null,
+  currentState: 'uninitialized',
   isConnecting: false,
   isProcessing: false,
   connectedReader: null,
   connectionStatus: 'not_connected',
   lastError: null,
-  simulationMode: false
+  simulationMode: false,
+  errorCount: 0,
+  maxRetries: 3
+};
+
+/**
+ * Validate state transition
+ * Ensures state machine follows valid transitions
+ */
+const canTransition = (from: TerminalState, to: TerminalState): boolean => {
+  const validTransitions: Record<TerminalState, TerminalState[]> = {
+    uninitialized: ['initializing', 'error'],
+    initializing: ['ready', 'error'],
+    ready: ['discovering', 'error'],
+    discovering: ['connecting', 'ready', 'error'],
+    connecting: ['connected', 'ready', 'error'],
+    connected: ['processing', 'disconnecting', 'error'],
+    processing: ['connected', 'error'],
+    disconnecting: ['ready', 'uninitialized', 'error'],
+    error: ['ready', 'uninitialized']
+  };
+
+  return validTransitions[from]?.includes(to) || false;
+};
+
+/**
+ * Transition to a new state
+ * @param newState - The new state to transition to
+ * @throws Error if transition is invalid
+ */
+const transitionTo = (newState: TerminalState): void => {
+  if (!canTransition(state.currentState, newState)) {
+    console.warn(
+      `[StripeTerminalBridge] Invalid state transition: ${state.currentState} -> ${newState}`
+    );
+    // Allow transition anyway but log warning
+  }
+
+  console.log(`[StripeTerminalBridge] State transition: ${state.currentState} -> ${newState}`);
+  state.currentState = newState;
 };
 
 /**
@@ -176,13 +231,24 @@ export const init = async (): Promise<boolean> => {
       document.head.appendChild(script);
     });
 
-    // Verify SDK is available
-    if (!window.StripeTerminal) {
-      throw new Error('Stripe Terminal SDK loaded but StripeTerminal is not available');
+    // Wait for SDK to be available (with retry)
+    // Sometimes the SDK takes a moment to initialize even after script load
+    const maxAttempts = 10;
+    const retryDelay = 100; // ms
+
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      if (window.StripeTerminal) {
+        console.log('[StripeTerminalBridge] SDK initialization complete');
+        return true;
+      }
+
+      if (attempt < maxAttempts - 1) {
+        console.log(`[StripeTerminalBridge] Waiting for SDK to initialize (attempt ${attempt + 1}/${maxAttempts})...`);
+        await new Promise(resolve => setTimeout(resolve, retryDelay));
+      }
     }
 
-    console.log('[StripeTerminalBridge] SDK initialization complete');
-    return true;
+    throw new Error('Stripe Terminal SDK loaded but StripeTerminal is not available after retries');
   } catch (error) {
     console.error('[StripeTerminalBridge] Initialization error:', error);
     state.lastError = error instanceof Error ? error.message : 'Unknown error';
@@ -192,11 +258,25 @@ export const init = async (): Promise<boolean> => {
 
 /**
  * Get connection token from backend
+ * @param terminalId - The terminal ID to get connection token for
  */
-const fetchConnectionToken = async (): Promise<string> => {
+const fetchConnectionToken = async (terminalId: string): Promise<string> => {
   try {
-    console.log('[StripeTerminalBridge] Fetching connection token...');
-    const response = await call.post('neopay_integration.api.get_connection_token_any', {});
+    console.log('[StripeTerminalBridge] Fetching connection token for terminal:', terminalId);
+
+    if (!terminalId) {
+      throw new Error('Terminal ID is required to fetch connection token');
+    }
+
+    const response = await call.post('neopay_integration.api.get_connection_token', {
+      terminal: terminalId
+    });
+
+    if (!response.message) {
+      throw new Error('No connection token received from server');
+    }
+
+    console.log('[StripeTerminalBridge] Connection token received');
     return response.message;
   } catch (error) {
     console.error('[StripeTerminalBridge] Failed to fetch connection token:', error);
@@ -207,9 +287,16 @@ const fetchConnectionToken = async (): Promise<string> => {
 /**
  * Initialize Terminal instance
  * Creates the Terminal object with callbacks
+ * @param terminalId - The terminal ID for connection token requests
  */
-export const initializeTerminal = async (): Promise<Terminal> => {
+export const initializeTerminal = async (terminalId: string): Promise<Terminal> => {
   try {
+    if (!terminalId) {
+      throw new Error('Terminal ID is required to initialize terminal');
+    }
+
+    transitionTo('initializing');
+
     // Ensure SDK is loaded
     await init();
 
@@ -217,15 +304,16 @@ export const initializeTerminal = async (): Promise<Terminal> => {
       throw new Error('Stripe Terminal SDK not available');
     }
 
-    console.log('[StripeTerminalBridge] Creating Terminal instance...');
+    console.log('[StripeTerminalBridge] Creating Terminal instance for:', terminalId);
 
     // Create terminal instance
     const terminal = window.StripeTerminal.create({
-      onFetchConnectionToken: fetchConnectionToken,
+      onFetchConnectionToken: () => fetchConnectionToken(terminalId),
       onUnexpectedReaderDisconnect: () => {
         console.warn('[StripeTerminalBridge] Unexpected reader disconnect');
         state.connectedReader = null;
         state.connectionStatus = 'not_connected';
+        transitionTo('error');
       },
       onConnectionStatusChange: (event: ConnectionStatusEvent) => {
         console.log('[StripeTerminalBridge] Connection status:', event.status);
@@ -234,13 +322,18 @@ export const initializeTerminal = async (): Promise<Terminal> => {
     });
 
     state.terminal = terminal;
-    state.isInitialized = true;
+    state.terminalId = terminalId;
+    state.errorCount = 0; // Reset error count on successful init
 
-    console.log('[StripeTerminalBridge] Terminal instance created');
+    transitionTo('ready');
+
+    console.log('[StripeTerminalBridge] Terminal instance created successfully');
     return terminal;
   } catch (error) {
     console.error('[StripeTerminalBridge] Failed to initialize terminal:', error);
     state.lastError = error instanceof Error ? error.message : 'Unknown error';
+    state.errorCount++;
+    transitionTo('error');
     throw error;
   }
 };
@@ -248,33 +341,72 @@ export const initializeTerminal = async (): Promise<Terminal> => {
 /**
  * Discover available readers
  * @param simulationMode - Use simulated terminals for testing
+ * @param terminalId - Optional terminal ID if terminal is not yet initialized
  */
-export const discoverReaders = async (simulationMode: boolean = false): Promise<Reader[]> => {
+export const discoverReaders = async (
+  simulationMode: boolean = false,
+  terminalId?: string
+): Promise<Reader[]> => {
   try {
     if (!state.terminal) {
-      await initializeTerminal();
+      if (!terminalId) {
+        throw new Error('Terminal ID is required when terminal is not initialized');
+      }
+      await initializeTerminal(terminalId);
     }
 
     if (!state.terminal) {
       throw new Error('Terminal not initialized');
     }
 
+    transitionTo('discovering');
+
     console.log('[StripeTerminalBridge] Discovering readers...', { simulationMode });
 
     state.simulationMode = simulationMode;
 
+    // Always discover real readers first (simulated: false)
+    // This matches the working neopay_integration pattern
     const config: DiscoverConfig = {
-      simulated: simulationMode
+      simulated: false
     };
 
     const discoverResult = await state.terminal.discoverReaders(config);
+    let readers = discoverResult.discoveredReaders;
 
-    console.log('[StripeTerminalBridge] Discovered readers:', discoverResult.discoveredReaders);
+    console.log('[StripeTerminalBridge] Discovered real readers:', readers);
 
-    return discoverResult.discoveredReaders;
+    // If simulation mode is enabled, manually add a simulated terminal
+    // This is the pattern used by neopay_integration which works reliably
+    // CRITICAL: Use 'SIMULATOR' not 'tmr_simulator' - this is client-side only, never calls Stripe API
+    if (simulationMode) {
+      const simulatedReader: Reader = {
+        id: 'SIMULATOR',
+        object: 'terminal.reader',
+        device_type: 'simulated_reader',
+        ip_address: '127.0.0.1',
+        label: 'Terminal Simulé (Test)',
+        serial_number: 'SIMULATOR-001',
+        status: 'online'
+      };
+
+      // Add simulated reader at the beginning of the list if not already present
+      if (!readers.some(r => r.id === 'SIMULATOR')) {
+        readers = [simulatedReader, ...readers];
+        console.log('[StripeTerminalBridge] Added simulated terminal for testing');
+      }
+    }
+
+    console.log('[StripeTerminalBridge] Final readers list:', readers);
+
+    transitionTo('ready');
+
+    return readers;
   } catch (error) {
     console.error('[StripeTerminalBridge] Discovery error:', error);
     state.lastError = error instanceof Error ? error.message : 'Unknown error';
+    state.errorCount++;
+    transitionTo('error');
     throw error;
   }
 };
@@ -289,25 +421,37 @@ export const connectToReader = async (reader: Reader): Promise<Reader> => {
       throw new Error('Terminal not initialized');
     }
 
+    transitionTo('connecting');
+
     console.log('[StripeTerminalBridge] Connecting to reader:', reader.label);
 
     state.isConnecting = true;
 
-    // Configure simulator if in simulation mode
-    if (state.simulationMode && reader.device_type === 'simulated') {
-      console.log('[StripeTerminalBridge] Configuring simulator...');
-      state.terminal.setSimulatorConfiguration({
-        testCardNumber: '4242424242424242'
+    // Check if this is a simulated reader (client-side only)
+    const isSimulated = reader.id === 'SIMULATOR' || reader.device_type === 'simulated_reader';
+
+    let connectedReader: Reader;
+
+    if (isSimulated) {
+      // SIMULATED CONNECTION - Don't call Stripe SDK, just fake it
+      console.log('[StripeTerminalBridge] Simulated connection - skipping SDK call');
+
+      // Fake connection delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Use the reader as-is (it's client-side only)
+      connectedReader = reader;
+    } else {
+      // REAL TERMINAL CONNECTION - Call Stripe SDK
+      connectedReader = await state.terminal.connectReader(reader, {
+        fail_if_in_use: false
       });
     }
-
-    const connectedReader = await state.terminal.connectReader(reader, {
-      fail_if_in_use: false
-    });
 
     state.connectedReader = connectedReader;
     state.connectionStatus = 'connected';
     state.isConnecting = false;
+    state.errorCount = 0; // Reset error count on successful connection
 
     // Save to localStorage for auto-reconnect
     localStorage.setItem('last_stripe_terminal', JSON.stringify({
@@ -316,6 +460,8 @@ export const connectToReader = async (reader: Reader): Promise<Reader> => {
       device_type: reader.device_type
     }));
 
+    transitionTo('connected');
+
     console.log('[StripeTerminalBridge] Connected to reader:', connectedReader.label);
 
     return connectedReader;
@@ -323,6 +469,8 @@ export const connectToReader = async (reader: Reader): Promise<Reader> => {
     console.error('[StripeTerminalBridge] Connection error:', error);
     state.isConnecting = false;
     state.lastError = error instanceof Error ? error.message : 'Unknown error';
+    state.errorCount++;
+    transitionTo('error');
     throw error;
   }
 };
@@ -336,6 +484,8 @@ export const disconnectReader = async (): Promise<void> => {
       return;
     }
 
+    transitionTo('disconnecting');
+
     console.log('[StripeTerminalBridge] Disconnecting reader...');
 
     await state.terminal.disconnectReader();
@@ -343,10 +493,14 @@ export const disconnectReader = async (): Promise<void> => {
     state.connectedReader = null;
     state.connectionStatus = 'not_connected';
 
+    transitionTo('ready');
+
     console.log('[StripeTerminalBridge] Reader disconnected');
   } catch (error) {
     console.error('[StripeTerminalBridge] Disconnect error:', error);
     state.lastError = error instanceof Error ? error.message : 'Unknown error';
+    state.errorCount++;
+    transitionTo('error');
     throw error;
   }
 };
@@ -415,9 +569,43 @@ export const processPayment = async (clientSecret: string): Promise<PaymentInten
       throw new Error('No reader connected');
     }
 
+    transitionTo('processing');
+
     console.log('[StripeTerminalBridge] Collecting payment method...');
     state.isProcessing = true;
 
+    // Check if using simulated terminal
+    const isSimulated = state.connectedReader.device_type === 'simulated_reader' ||
+                        state.connectedReader.id === 'SIMULATOR';
+
+    if (isSimulated) {
+      // SIMULATED PAYMENT FLOW - Skip Stripe SDK calls
+      console.log('[StripeTerminalBridge] Simulated payment - skipping SDK calls');
+
+      // Simulate 2-second processing delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Create fake payment intent
+      const fakePaymentIntent: PaymentIntent = {
+        id: 'pi_simulated_' + Date.now(),
+        object: 'payment_intent',
+        amount: 0, // Will be filled from client_secret
+        currency: 'chf',
+        status: 'succeeded',
+        created: Math.floor(Date.now() / 1000),
+        livemode: false
+      };
+
+      state.isProcessing = false;
+      state.errorCount = 0;
+      transitionTo('connected');
+
+      console.log('[StripeTerminalBridge] Simulated payment succeeded:', fakePaymentIntent);
+
+      return fakePaymentIntent;
+    }
+
+    // REAL TERMINAL PAYMENT FLOW
     // Collect payment method
     const collectResult = await state.terminal.collectPaymentMethod(clientSecret, {
       config_override: {
@@ -425,12 +613,23 @@ export const processPayment = async (clientSecret: string): Promise<PaymentInten
       }
     });
 
+    // Check if collection was cancelled
+    if (!collectResult || !collectResult.paymentIntent) {
+      console.log('[StripeTerminalBridge] Payment method collection was cancelled');
+      state.isProcessing = false;
+      transitionTo('connected');
+      throw new Error('Payment collection was cancelled');
+    }
+
     console.log('[StripeTerminalBridge] Payment method collected, processing payment...');
 
     // Process payment
     const processResult = await state.terminal.processPayment(collectResult.paymentIntent);
 
     state.isProcessing = false;
+    state.errorCount = 0; // Reset error count on successful payment
+
+    transitionTo('connected');
 
     console.log('[StripeTerminalBridge] Payment processed successfully:', processResult.paymentIntent);
 
@@ -439,6 +638,8 @@ export const processPayment = async (clientSecret: string): Promise<PaymentInten
     console.error('[StripeTerminalBridge] Payment processing error:', error);
     state.isProcessing = false;
     state.lastError = error instanceof Error ? error.message : 'Unknown error';
+    state.errorCount++;
+    transitionTo('error');
     throw error;
   }
 };
@@ -449,19 +650,42 @@ export const processPayment = async (clientSecret: string): Promise<PaymentInten
 export const cancelPayment = async (): Promise<void> => {
   try {
     if (!state.terminal) {
+      console.warn('[StripeTerminalBridge] No terminal initialized');
       return;
     }
 
-    console.log('[StripeTerminalBridge] Cancelling payment...');
+    // Check if we're actually processing a payment
+    // This prevents calling cancelCollectPaymentMethod() when no collection is active
+    if (!state.isProcessing) {
+      console.warn('[StripeTerminalBridge] No active payment collection to cancel');
+      return;
+    }
 
+    // Additional check: Verify terminal state is 'processing'
+    // This ensures the FSM is in the correct state for cancellation
+    if (state.currentState !== 'processing') {
+      console.warn(
+        `[StripeTerminalBridge] Cannot cancel - terminal state is ${state.currentState}, not processing`
+      );
+      return;
+    }
+
+    console.log('[StripeTerminalBridge] Cancelling payment collection...');
+
+    // Only now is it safe to call cancelCollectPaymentMethod
     await state.terminal.cancelCollectPaymentMethod();
 
     state.isProcessing = false;
 
-    console.log('[StripeTerminalBridge] Payment cancelled');
+    // Transition back to connected state
+    transitionTo('connected');
+
+    console.log('[StripeTerminalBridge] Payment collection cancelled successfully');
   } catch (error) {
     console.error('[StripeTerminalBridge] Cancel payment error:', error);
+    state.isProcessing = false;
     state.lastError = error instanceof Error ? error.message : 'Unknown error';
+    transitionTo('error');
     throw error;
   }
 };

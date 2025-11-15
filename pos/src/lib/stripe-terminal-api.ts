@@ -105,13 +105,45 @@ export const initializeStripeSDK = async (): Promise<boolean> => {
 /**
  * Get connection token for Stripe Terminal SDK
  */
-export const getConnectionToken = async (): Promise<string> => {
+export const getConnectionToken = async (terminal: string): Promise<string> => {
   try {
-    const response = await call.post('neopay_integration.api.get_connection_token', {});
-    return response.message;
+    const response = await call.post('neopay_integration.api.get_connection_token', {
+      terminal: terminal
+    });
+    // Backend returns the secret string directly, not wrapped in message
+    return response.message || response;
   } catch (error) {
     console.error('Failed to get connection token:', error);
     throw error;
+  }
+};
+
+/**
+ * Minimum payment amounts by currency (in base units, not cents)
+ */
+const MINIMUM_AMOUNTS: Record<string, number> = {
+  chf: 0.50,
+  eur: 0.50,
+  usd: 0.50,
+  gbp: 0.30
+};
+
+/**
+ * Validate payment amount for currency
+ * @throws Error if amount is invalid
+ */
+const validatePaymentAmount = (amount: number, currency: string): void => {
+  if (amount <= 0) {
+    throw new Error(_('Le montant doit être supérieur à zéro'));
+  }
+
+  const currencyLower = currency.toLowerCase();
+  const minimumAmount = MINIMUM_AMOUNTS[currencyLower] || 0.50;
+
+  if (amount < minimumAmount) {
+    throw new Error(
+      _(`Le montant minimum pour ${currency.toUpperCase()} est ${minimumAmount.toFixed(2)}`)
+    );
   }
 };
 
@@ -136,10 +168,18 @@ export const createPaymentIntent = async (
       terminalId
     });
 
-    // Backend only accepts: terminal_id, amount, currency
+    // Validate terminal ID
+    if (!terminalId) {
+      throw new Error(_('L\'ID du terminal est requis'));
+    }
+
+    // Validate amount
+    validatePaymentAmount(amount, currency);
+
+    // Backend accepts: terminal_id, amount (in cents), currency
     const requestData = {
-      terminal_id: terminalId || 'default',
-      amount: amount * 100, // Convert to cents
+      terminal_id: terminalId,
+      amount: Math.round(amount * 100), // Convert to cents and round
       currency: currency.toLowerCase()
     };
 
@@ -149,12 +189,40 @@ export const createPaymentIntent = async (
     const response = await call.post('neopay_integration.api.create_payment_intent', requestData);
 
     console.log('[createPaymentIntent] API response:', response);
-    return response.message;
-  } catch (error) {
+
+    if (!response.message) {
+      throw new Error(_('Réponse invalide du serveur'));
+    }
+
+    const result = response.message;
+
+    // Validate response has required fields
+    if (!result.client_secret) {
+      throw new Error(_('Secret client manquant dans la réponse'));
+    }
+
+    if (!result.payment_intent_id) {
+      throw new Error(_('ID d\'intention de paiement manquant'));
+    }
+
+    return result;
+  } catch (error: any) {
     console.error('[createPaymentIntent] Error caught:', error);
     console.error('[createPaymentIntent] Error type:', typeof error);
-    console.error('[createPaymentIntent] Error keys:', error ? Object.keys(error) : 'null');
-    throw error;
+    console.error('[createPaymentIntent] Error details:', error);
+
+    // Translate common Stripe errors to French
+    let errorMessage = error.message || _('Échec de création de l\'intention de paiement');
+
+    if (errorMessage.includes('Terminal ID is required')) {
+      errorMessage = _('L\'ID du terminal est requis');
+    } else if (errorMessage.includes('not found')) {
+      errorMessage = _('Terminal non trouvé');
+    } else if (errorMessage.includes('amount')) {
+      errorMessage = _('Montant invalide');
+    }
+
+    throw new Error(errorMessage);
   }
 };
 
@@ -236,15 +304,15 @@ export const getTerminalStatus = async (terminalId: string): Promise<TerminalSta
  * Update transaction status after payment
  */
 export const updateTransactionStatus = async (
-  transactionId: string,
+  paymentIntentId: string,
   status: string,
-  paymentIntentId?: string
+  simulated: boolean = false
 ): Promise<void> => {
   try {
     await call.post('neopay_integration.api.update_transaction_status', {
-      transaction_id: transactionId,
+      payment_intent_id: paymentIntentId,
       status: status,
-      payment_intent_id: paymentIntentId
+      simulated: simulated
     });
   } catch (error) {
     console.error('Failed to update transaction status:', error);

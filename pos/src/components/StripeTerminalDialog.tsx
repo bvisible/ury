@@ -4,7 +4,7 @@ import { CreditCard, AlertCircle, CheckCircle, Loader2, Wifi, WifiOff } from 'lu
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Button } from './ui/button';
 import { cn, formatCurrency } from '../lib/utils';
-import { usePOSStore } from '../store/pos-store';
+import { useRootStore } from '../store/root-store';
 import PaymentAmountDialog from './PaymentAmountDialog';
 import {
   getAvailableTerminals,
@@ -46,8 +46,13 @@ const StripeTerminalDialog: React.FC<StripeTerminalDialogProps> = ({
   referenceDoctype,
   referenceDocname
 }) => {
-  const { user } = usePOSStore();
-  const isAdmin = user?.roles?.includes('Administrator') || false;
+  const { user } = useRootStore();
+  const isAdmin = user?.roles?.includes('System Manager') || false;
+
+  // DEBUG: Log user and isAdmin
+  console.log('[StripeTerminalDialog] DEBUG - user:', user);
+  console.log('[StripeTerminalDialog] DEBUG - user.roles:', user?.roles);
+  console.log('[StripeTerminalDialog] DEBUG - isAdmin:', isAdmin);
 
   const [dialogState, setDialogState] = useState<DialogState>('terminal-selection');
   const [amount, setAmount] = useState<number>(0);
@@ -57,7 +62,7 @@ const StripeTerminalDialog: React.FC<StripeTerminalDialogProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [paymentResult, setPaymentResult] = useState<PaymentIntentResponse | null>(null);
-  const [simulationMode, setSimulationMode] = useState(isAdmin);
+  const [simulationMode, setSimulationMode] = useState(false); // Always start with real terminals
 
   // Reset state when dialog opens
   useEffect(() => {
@@ -70,44 +75,71 @@ const StripeTerminalDialog: React.FC<StripeTerminalDialogProps> = ({
     }
   }, [isOpen]);
 
-  // Load terminals when moving to terminal selection
-  useEffect(() => {
-    if (dialogState === 'terminal-selection' && terminals.length === 0) {
-      loadAvailableTerminals();
-    }
-  }, [dialogState]);
-
-  // Reload terminals when simulation mode changes
+  // Load terminals when moving to terminal selection OR when simulation mode changes
   useEffect(() => {
     if (dialogState === 'terminal-selection') {
-      setTerminals([]); // Clear current terminals
-      setSelectedTerminal(null); // Clear selection
+      // Clear existing terminals when simulation mode changes
+      if (terminals.length > 0) {
+        setTerminals([]);
+        setSelectedTerminal(null);
+      }
       loadAvailableTerminals();
     }
-  }, [simulationMode]);
+  }, [dialogState, simulationMode]);
 
   /**
    * Load available terminals using Stripe Terminal SDK
+   * Flow:
+   * 1. Get ERPNext terminals from database
+   * 2. Use first terminal's name to initialize SDK
+   * 3. Discover readers via SDK
+   * 4. Map SDK readers with ERPNext terminal names
    */
   const loadAvailableTerminals = async () => {
     setIsLoadingTerminals(true);
+    setError(null);
+
     try {
-      // Initialize terminal first
-      await StripeBridge.initializeTerminal();
-
-      // Discover readers using SDK
-      const discoveredReaders = await StripeBridge.discoverReaders(simulationMode);
-
-      // Get ERPNext terminals to map names
+      // Step 1: Get ERPNext terminals first
       const erpnextTerminals = await getAvailableTerminals(posProfile);
 
-      // Map SDK readers with ERPNext terminal names
+      if (erpnextTerminals.length === 0) {
+        setError(_('Aucun terminal configuré dans le profil POS'));
+        setTerminals([]);
+        return;
+      }
+
+      console.log('[StripeTerminalDialog] ERPNext terminals:', erpnextTerminals);
+
+      // Step 2: Use first terminal's name for SDK initialization
+      // In simulation mode, we can use a dummy terminal name since it won't be validated
+      const initTerminalId = simulationMode ? 'simulated-terminal' : erpnextTerminals[0].name;
+
+      console.log('[StripeTerminalDialog] Initializing terminal with ID:', initTerminalId);
+
+      // Step 3: Initialize SDK and discover readers
+      const discoveredReaders = await StripeBridge.discoverReaders(simulationMode, initTerminalId);
+
+      console.log('[StripeTerminalDialog] Discovered readers:', discoveredReaders);
+
+      if (discoveredReaders.length === 0) {
+        setError(
+          simulationMode
+            ? _('Aucun terminal simulé trouvé')
+            : _('Aucun terminal découvert. Vérifiez que vos terminaux sont en ligne.')
+        );
+        setTerminals([]);
+        return;
+      }
+
+      // Step 4: Map SDK readers with ERPNext terminal names
       const mappedTerminals = discoveredReaders.map(reader => {
         // Find matching ERPNext terminal by label
         const erpnextTerminal = erpnextTerminals.find(t => t.label === reader.label);
         return {
           ...reader,
-          erpnextName: erpnextTerminal?.name || reader.label // Use ERPNext name for API calls
+          erpnextName: erpnextTerminal?.name || reader.label, // Use ERPNext name for API calls
+          status: reader.device_type === 'simulated' ? 'online' : (reader.status || 'offline')
         };
       });
 
@@ -119,13 +151,17 @@ const StripeTerminalDialog: React.FC<StripeTerminalDialogProps> = ({
         const reader = mappedTerminals.find(r => r.id === lastUsed.id);
         if (reader) {
           setSelectedTerminal(reader);
+          console.log('[StripeTerminalDialog] Auto-selected last used terminal:', reader.label);
         }
       } else if (mappedTerminals.length === 1) {
         setSelectedTerminal(mappedTerminals[0]);
+        console.log('[StripeTerminalDialog] Auto-selected only terminal:', mappedTerminals[0].label);
       }
-    } catch (error) {
-      console.error('Failed to load terminals:', error);
-      setError('Failed to load terminals. Please try again.');
+    } catch (error: any) {
+      console.error('[StripeTerminalDialog] Failed to load terminals:', error);
+      setError(
+        error.message || _('Échec du chargement des terminaux. Veuillez réessayer.')
+      );
     } finally {
       setIsLoadingTerminals(false);
     }
@@ -161,14 +197,17 @@ const StripeTerminalDialog: React.FC<StripeTerminalDialogProps> = ({
   /**
    * Process payment using Stripe Terminal SDK
    * Flow:
-   * 1. Connect to selected terminal
-   * 2. Create payment intent
-   * 3. Collect payment method from terminal
-   * 4. Process payment
+   * 1. Validate terminal selection
+   * 2. Connect to selected terminal
+   * 3. Configure simulator if needed
+   * 4. Create payment intent
+   * 5. Collect payment method from terminal
+   * 6. Process payment
+   * 7. Handle success/error
    */
   const handleProcessPayment = async (paymentAmount: number) => {
     if (!selectedTerminal) {
-      setError('Please select a terminal');
+      setError(_('Veuillez sélectionner un terminal'));
       return;
     }
 
@@ -177,24 +216,32 @@ const StripeTerminalDialog: React.FC<StripeTerminalDialogProps> = ({
     setError(null);
 
     try {
-      // Step 1: Connect to terminal
-      console.log('Connecting to terminal:', selectedTerminal.label);
+      // Step 1 & 2: Connect to terminal
+      console.log('[handleProcessPayment] Connecting to terminal:', selectedTerminal.label);
       await StripeBridge.connectToReader(selectedTerminal);
 
-      // Step 2: Create payment intent
-      console.log('Creating payment intent...');
-      console.log('Selected terminal object:', selectedTerminal);
-      console.log('Terminal erpnextName:', (selectedTerminal as any).erpnextName);
-      console.log('Terminal label:', selectedTerminal.label);
+      // Step 3: Configure simulator if in simulation mode
+      if (simulationMode && selectedTerminal.device_type === 'simulated') {
+        console.log('[handleProcessPayment] Configuring simulator for success...');
+        const terminal = StripeBridge.getState().terminal;
+        if (terminal && terminal.setSimulatorConfiguration) {
+          terminal.setSimulatorConfiguration({
+            testCardNumber: '4242424242424242' // Success card
+          });
+        }
+      }
 
+      // Step 4: Create payment intent
+      console.log('[handleProcessPayment] Creating payment intent...');
       const terminalId = (selectedTerminal as any).erpnextName || selectedTerminal.label;
-      console.log('Using terminal ID:', terminalId);
-      console.log('Payment details:', {
+
+      console.log('[handleProcessPayment] Payment details:', {
         amount: paymentAmount,
         currency,
         referenceDoctype,
         referenceDocname,
-        terminalId
+        terminalId,
+        simulationMode
       });
 
       const paymentIntent = await createPaymentIntent(
@@ -206,20 +253,22 @@ const StripeTerminalDialog: React.FC<StripeTerminalDialogProps> = ({
         terminalId
       );
 
-      console.log('Payment intent created:', paymentIntent);
+      console.log('[handleProcessPayment] Payment intent created:', paymentIntent);
 
       if (!paymentIntent.client_secret) {
-        throw new Error('Failed to create payment intent - no client secret');
+        throw new Error(_('Échec de création de l\'intention de paiement - secret client manquant'));
       }
 
-      // Step 3 & 4: Collect payment method and process payment using connected terminal
-      console.log('Processing payment with terminal...');
+      // Step 5 & 6: Collect payment method and process payment
+      console.log('[handleProcessPayment] Processing payment with terminal...');
       const result = await StripeBridge.processPayment(paymentIntent.client_secret);
+
+      console.log('[handleProcessPayment] Payment result:', result);
 
       // Extract transaction ID from result
       const transactionId = result.charges?.data[0]?.id || paymentIntent.transaction_id || result.id;
 
-      // Payment successful
+      // Step 7: Payment successful
       setPaymentResult({
         success: true,
         payment_intent_id: result.id,
@@ -238,8 +287,22 @@ const StripeTerminalDialog: React.FC<StripeTerminalDialogProps> = ({
         onClose();
       }, 2000);
     } catch (error: any) {
-      console.error('Payment processing error:', error);
-      setError(error.message || 'Payment failed. Please try again.');
+      console.error('[handleProcessPayment] Payment processing error:', error);
+
+      // Translate common errors to French
+      let errorMessage = error.message || _('Le paiement a échoué. Veuillez réessayer.');
+
+      if (errorMessage.includes('canceled') || errorMessage.includes('cancelled')) {
+        errorMessage = _('Le paiement a été annulé');
+      } else if (errorMessage.includes('timeout')) {
+        errorMessage = _('Le paiement a expiré. Veuillez réessayer.');
+      } else if (errorMessage.includes('declined') || errorMessage.includes('card_declined')) {
+        errorMessage = _('La carte a été refusée');
+      } else if (errorMessage.includes('connection')) {
+        errorMessage = _('Erreur de connexion au terminal. Vérifiez la connexion.');
+      }
+
+      setError(errorMessage);
       setDialogState('error');
     } finally {
       setIsProcessing(false);
@@ -395,28 +458,40 @@ const StripeTerminalDialog: React.FC<StripeTerminalDialogProps> = ({
 
               {/* Terminal Status Panel */}
               {selectedTerminal && (
-                <div className="bg-gray-50 rounded-lg p-4 border">
-                  <h4 className="font-semibold mb-2">{'Terminal Status'}</h4>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div>
-                      <span className="text-gray-600">{'Status'}:</span>
-                      <span
-                        className={cn(
-                          "ml-2 font-medium",
-                          (selectedTerminal.status === 'online' || selectedTerminal.device_type === 'simulated') ? "text-green-600" : "text-red-600"
-                        )}
-                      >
-                        {(selectedTerminal.status === 'online' || selectedTerminal.device_type === 'simulated') ? 'Online' : 'Offline'}
-                      </span>
+                <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-semibold text-gray-900">{__('État du Terminal')}</h4>
+                    {(selectedTerminal.status === 'online' || selectedTerminal.device_type === 'simulated') ? (
+                      <div className="flex items-center gap-1.5 text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                        <div className="h-2 w-2 bg-green-600 rounded-full animate-pulse"></div>
+                        <span className="text-xs font-medium">{__('En ligne')}</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1.5 text-red-600 bg-red-50 px-2 py-1 rounded-full">
+                        <div className="h-2 w-2 bg-red-600 rounded-full"></div>
+                        <span className="text-xs font-medium">{__('Hors ligne')}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div className="bg-white rounded p-2">
+                      <span className="text-gray-500 text-xs">{__('Nom')}:</span>
+                      <div className="font-medium text-gray-900 truncate">{selectedTerminal.label}</div>
                     </div>
-                    <div>
-                      <span className="text-gray-600">{'Device'}:</span>
-                      <span className="ml-2">{selectedTerminal.device_type}</span>
+                    <div className="bg-white rounded p-2">
+                      <span className="text-gray-500 text-xs">{__('Type')}:</span>
+                      <div className="font-medium text-gray-900">{selectedTerminal.device_type}</div>
                     </div>
                     {selectedTerminal.ip_address && (
-                      <div className="col-span-2">
-                        <span className="text-gray-600">{'IP Address'}:</span>
-                        <span className="ml-2 font-mono text-xs">{selectedTerminal.ip_address}</span>
+                      <div className="col-span-2 bg-white rounded p-2">
+                        <span className="text-gray-500 text-xs">{__('Adresse IP')}:</span>
+                        <div className="font-mono text-xs text-gray-900">{selectedTerminal.ip_address}</div>
+                      </div>
+                    )}
+                    {selectedTerminal.serial_number && (
+                      <div className="col-span-2 bg-white rounded p-2">
+                        <span className="text-gray-500 text-xs">{__('Numéro de série')}:</span>
+                        <div className="font-mono text-xs text-gray-900">{selectedTerminal.serial_number}</div>
                       </div>
                     )}
                   </div>
@@ -451,29 +526,92 @@ const StripeTerminalDialog: React.FC<StripeTerminalDialogProps> = ({
                 <Loader2 className="h-24 w-24 animate-spin text-blue-600" />
                 <CreditCard className="h-12 w-12 absolute top-6 left-6 text-blue-600" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">{'Processing Payment...'}</h3>
-              <p className="text-gray-600">{'Please present card to the terminal'}</p>
+              <h3 className="text-xl font-semibold mb-2">{__('Traitement du paiement...')}</h3>
+              <p className="text-gray-600">{__('Veuillez présenter la carte au terminal')}</p>
               <p className="text-sm text-gray-500 mt-2">
-                {'Do not close this window'}
+                {__('Ne fermez pas cette fenêtre')}
               </p>
+              {simulationMode && (
+                <div className="mt-4 inline-block bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-medium">
+                  {__('Mode simulation - Paiement de test')}
+                </div>
+              )}
+              {selectedTerminal && (
+                <p className="text-xs text-gray-400 mt-3">
+                  {__('Terminal')}: {selectedTerminal.label}
+                </p>
+              )}
+
+              {/* Cancel button */}
+              <div className="mt-6">
+                <Button
+                  variant="outline"
+                  onClick={async () => {
+                    // Show confirmation dialog before canceling
+                    if (!confirm(__('Êtes-vous sûr de vouloir annuler ce paiement ?'))) {
+                      return;
+                    }
+
+                    try {
+                      // Get current state before canceling
+                      const bridgeState = StripeBridge.getState();
+
+                      if (!bridgeState.isProcessing) {
+                        console.warn('[StripeTerminalDialog] No active payment to cancel');
+                        // Just close the dialog
+                        setDialogState('terminal-selection');
+                        setError(null);
+                        setIsProcessing(false);
+                        return;
+                      }
+
+                      // Now safe to cancel
+                      await StripeBridge.cancelPayment();
+
+                      // Update UI with success message
+                      setError(__('Paiement annulé par l\'utilisateur'));
+                      setDialogState('error'); // Use error state to show message
+                      setIsProcessing(false);
+                    } catch (err: any) {
+                      console.error('[StripeTerminalDialog] Cancel error:', err);
+
+                      // Show error to user
+                      setError(
+                        err.message || __('Erreur lors de l\'annulation du paiement')
+                      );
+                      setDialogState('error');
+                      setIsProcessing(false);
+                    }
+                  }}
+                  className="border-red-300 text-red-700 hover:bg-red-50"
+                  disabled={!isProcessing}
+                >
+                  {__('Annuler le paiement')}
+                </Button>
+              </div>
             </div>
           )}
 
           {/* Success State */}
           {dialogState === 'success' && (
             <div className="text-center py-8">
-              <div className="mx-auto w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mb-4">
+              <div className="mx-auto w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mb-4 animate-bounce">
                 <CheckCircle className="h-16 w-16 text-green-600" />
               </div>
               <h3 className="text-xl font-semibold text-green-900 mb-2">
-                {'Payment Successful!'}
+                {__('Paiement réussi !')}
               </h3>
               <p className="text-2xl font-bold text-green-700">
                 {formatCurrency(amount, currency)}
               </p>
               <p className="text-sm text-gray-500 mt-4">
-                {'Transaction ID'}: {paymentResult?.transaction_id}
+                {__('ID de transaction')}: {paymentResult?.transaction_id}
               </p>
+              {simulationMode && (
+                <div className="mt-3 inline-block bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-medium">
+                  {__('Paiement simulé')}
+                </div>
+              )}
             </div>
           )}
 
@@ -484,21 +622,29 @@ const StripeTerminalDialog: React.FC<StripeTerminalDialogProps> = ({
                 <AlertCircle className="h-16 w-16 text-red-600" />
               </div>
               <h3 className="text-xl font-semibold text-red-900 mb-2">
-                {'Payment Failed'}
+                {__('Échec du paiement')}
               </h3>
-              <p className="text-gray-600">{error}</p>
+              <p className="text-gray-700 max-w-md mx-auto">{error}</p>
+              {selectedTerminal && (
+                <p className="text-xs text-gray-400 mt-3">
+                  {__('Terminal')}: {selectedTerminal.label}
+                </p>
+              )}
               <div className="flex gap-3 mt-6 justify-center">
                 <Button
                   variant="outline"
                   onClick={onClose}
                 >
-                  {'Cancel'}
+                  {__('Annuler')}
                 </Button>
                 <Button
-                  onClick={() => setDialogState('terminal-selection')}
+                  onClick={() => {
+                    setDialogState('terminal-selection');
+                    setError(null);
+                  }}
                   className="bg-blue-600 hover:bg-blue-700 text-white"
                 >
-                  {'Try Again'}
+                  {__('Réessayer')}
                 </Button>
               </div>
             </div>

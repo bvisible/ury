@@ -129,6 +129,8 @@ export async function getCombinedPosProfile(): Promise<PosProfileCombined> {
     print_format: limitedProfile.print_format,
     qz_print: limitedProfile.qz_print,
     qz_host: limitedProfile.qz_host,
+    cloudprnt_printer: limitedProfile.cloudprnt_printer,
+    cloudprnt_printer_name: limitedProfile.cloudprnt_printer_name,
     printer: limitedProfile.printer,
     print_type: limitedProfile.print_type,
     tableAttention: limitedProfile.tableAttention,

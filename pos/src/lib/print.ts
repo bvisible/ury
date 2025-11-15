@@ -15,10 +15,10 @@ interface PrintOrderParams {
 }
 
 export async function printOrder({ orderId, posProfile }: PrintOrderParams): Promise<'qz' | 'network' | 'socket' | 'cloudprnt'> {
-  const { print_type, qz_host, print_format, printer, name, cashier, multiple_cashier } = posProfile;
+  const { print_type, qz_host, print_format, printer, name, cashier, multiple_cashier, cloudprnt_printer_name } = posProfile;
 
   if (print_type === 'cloudprnt') {
-    await cloudprntPrint(orderId);
+    await cloudprntPrint(orderId, cloudprnt_printer_name);
     await updatePrintStatus(orderId);
     return 'cloudprnt';
   } else if (print_type === 'qz') {
