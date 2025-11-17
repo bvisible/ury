@@ -1,5 +1,6 @@
 import { call } from './frappe-sdk';
 import { OrderType } from '../data/order-types';
+import { __ } from '../lib/i18n';
 
 export interface POSInvoice {
   name: string;
@@ -73,7 +74,7 @@ export async function getPOSInvoices({
     };
   } catch (error) {
     console.error('Error fetching POS invoices:', error);
-    throw new Error('Failed to fetch POS invoices');
+    throw new Error(__('Failed to fetch POS invoices'));
   }
 }
 
@@ -92,7 +93,7 @@ export async function getPOSInvoiceItems(invoiceId: string) {
     };
   } catch (error) {
     console.error('Error fetching POS invoice items:', error);
-    throw new Error('Failed to fetch POS invoice items');
+    throw new Error(__('Failed to fetch POS invoice items'));
   }
 }
 
@@ -107,7 +108,7 @@ export async function updateInvoiceStatus(
     });
   } catch (error) {
     console.error('Error updating invoice status:', error);
-    throw new Error('Failed to update invoice status');
+    throw new Error(__('Failed to update invoice status'));
   }
 } 
 
@@ -138,7 +139,7 @@ export async function getInvoicePrintHtml(invoiceId: string, printFormat: string
     return response.message.html;
   } catch (error) {
     console.error('Error fetching invoice print HTML:', error);
-    throw new Error('Failed to fetch invoice print HTML');
+    throw new Error(__('Failed to fetch invoice print HTML'));
   }
 } 
 
@@ -172,6 +173,8 @@ export async function updatePrintStatus(orderId: string) {
 
 export async function cloudprntPrint(orderId: string, printer?: string | null) {
   try {
+    console.log('[CloudPRNT] Starting print request:', { orderId, printer });
+
     const args: { invoice_name: string; printer?: string } = {
       invoice_name: orderId
     };
@@ -181,10 +184,12 @@ export async function cloudprntPrint(orderId: string, printer?: string | null) {
       args.printer = printer;
     }
 
+    console.log('[CloudPRNT] Calling API with args:', args);
     const result = await call.post('ury.ury.api.ury_cloudprnt.cloudprnt_print_invoice', args);
+    console.log('[CloudPRNT] API result:', result);
     return result;
   } catch (error) {
-    console.error('Error printing to CloudPRNT:', error);
+    console.error('[CloudPRNT] ERROR printing to CloudPRNT:', error);
     throw error;
   }
 } 
