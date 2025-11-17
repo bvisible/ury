@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { cn } from '../../lib/utils';
 import { Button } from '../ui/button';
 import { usePOSStore } from '../../store/pos-store';
+import { __ } from '../../lib/i18n';
 
 interface MobileConfigBottomSheetProps {
   isOpen: boolean;
@@ -14,12 +15,6 @@ interface MobileConfigBottomSheetProps {
 
 type OrderType = 'Dine In' | 'Take Away' | 'Delivery';
 
-const ORDER_TYPES: { value: OrderType; icon: typeof ShoppingBag; label: string; description: string }[] = [
-  { value: 'Take Away', icon: ShoppingBag, label: 'Take Away', description: 'Takeout order' },
-  { value: 'Dine In', icon: UtensilsCrossed, label: 'Dine In', description: 'Dine in service' },
-  { value: 'Delivery', icon: Truck, label: 'Delivery', description: 'Delivery service' },
-];
-
 export function MobileConfigBottomSheet({
   isOpen,
   onClose,
@@ -27,6 +22,13 @@ export function MobileConfigBottomSheet({
 }: MobileConfigBottomSheetProps) {
   const [selectedOrderType, setSelectedOrderType] = useState<OrderType>('Take Away');
   const { setSelectedOrderType: setStoreOrderType, setSelectedCustomer, customers } = usePOSStore();
+
+  // Get translated order types at runtime
+  const ORDER_TYPES: { value: OrderType; icon: typeof ShoppingBag; label: string; description: string }[] = [
+    { value: 'Take Away', icon: ShoppingBag, label: __('Take Away'), description: __('Takeout order') },
+    { value: 'Dine In', icon: UtensilsCrossed, label: __('Dine In'), description: __('Dine in service') },
+    { value: 'Delivery', icon: Truck, label: __('Delivery'), description: __('Delivery service') },
+  ];
 
   const handleContinue = () => {
     // Set order type
@@ -56,7 +58,7 @@ export function MobileConfigBottomSheet({
         <Sheet.Header>
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
             <h2 className="text-lg font-semibold text-gray-900">
-              Configure Order
+              {__('Configure Order')}
             </h2>
             <button
               onClick={onClose}
@@ -71,9 +73,9 @@ export function MobileConfigBottomSheet({
           {/* Order Type Selection - Scrollable */}
           <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
             <div>
-              <h3 className="text-sm font-medium text-gray-700 mb-3">Order Type</h3>
+              <h3 className="text-sm font-medium text-gray-700 mb-3">{__('Order Type')}</h3>
               <div className="space-y-2">
-                {ORDER_TYPES.map(({ value, icon: Icon, label, description }) => (
+                {ORDER_TYPES.map(({ value, icon: Icon }) => (
                   <motion.button
                     key={value}
                     whileTap={{ scale: 0.98 }}
@@ -98,9 +100,13 @@ export function MobileConfigBottomSheet({
                         'font-semibold',
                         selectedOrderType === value ? 'text-primary-900' : 'text-gray-900'
                       )}>
-                        {label}
+                        {__(value)}
                       </p>
-                      <p className="text-sm text-gray-500">{description}</p>
+                      <p className="text-sm text-gray-500">
+                        {value === 'Take Away' ? __('Takeout order') :
+                         value === 'Dine In' ? __('Dine in service') :
+                         __('Delivery service')}
+                      </p>
                     </div>
                     {selectedOrderType === value && (
                       <div className="w-5 h-5 rounded-full bg-primary-600 flex items-center justify-center">
@@ -116,8 +122,8 @@ export function MobileConfigBottomSheet({
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
               <p className="text-sm text-blue-800">
                 {selectedOrderType === 'Dine In'
-                  ? 'You can select a table after starting the order.'
-                  : 'A default customer will be automatically selected.'}
+                  ? __('You can select a table after starting the order.')
+                  : __('A default customer will be automatically selected.')}
               </p>
             </div>
           </div>
@@ -128,7 +134,7 @@ export function MobileConfigBottomSheet({
               onClick={handleContinue}
               className="w-full h-12 text-base font-semibold bg-primary-600 hover:bg-primary-700"
             >
-              Continue
+              {__('Continue')}
             </Button>
           </div>
         </Sheet.Content>

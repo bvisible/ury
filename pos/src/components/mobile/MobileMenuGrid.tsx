@@ -3,6 +3,7 @@ import { Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn, formatCurrency } from '../../lib/utils';
 import type { MenuItem } from '../../store/pos-store';
+import { __ } from '../../lib/i18n';
 
 interface MobileMenuGridProps {
   items: MenuItem[];
@@ -22,8 +23,8 @@ export function MobileMenuGrid({
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-gray-400">
-        <p className="text-lg font-medium">No items found</p>
-        <p className="text-sm mt-1">Try selecting a different category</p>
+        <p className="text-lg font-medium">{__('No items found')}</p>
+        <p className="text-sm mt-1">{__('Try selecting a different category')}</p>
       </div>
     );
   }

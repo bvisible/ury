@@ -5,6 +5,7 @@ import { usePOSStore } from '../store/pos-store';
 import { cn } from '../lib/utils';
 import { Button, Input } from './ui';
 import { Dialog, DialogContent } from './ui/dialog';
+import { __ } from '../lib/i18n';
 
 const Spotlight = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -67,7 +68,7 @@ const Spotlight = () => {
           <Input
             ref={inputRef}
             type="text"
-            placeholder="Search menu items..."
+            placeholder={__('Search menu items...')}
             className="flex-1 outline-none text-lg border-0 shadow-none focus:ring-0"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -118,10 +119,10 @@ const Spotlight = () => {
 
         <div className="border-t border-gray-200 p-4 text-sm text-gray-500">
           <div className="flex items-center justify-between">
-            <span>Use ↑↓ to navigate, Enter to select</span>
+            <span>{__('Use ↑↓ to navigate, Enter to select')}</span>
             <div className="flex items-center gap-2">
               <Command className="w-4 h-4" />
-              <span>K</span>
+              <span>{__('K')}</span>
             </div>
           </div>
         </div>

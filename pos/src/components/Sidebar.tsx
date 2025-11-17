@@ -1,7 +1,8 @@
-import { 
+import {
   Grid3X3,
   UtensilsCrossed,
 } from 'lucide-react';
+import { __ } from '../lib/i18n';
 import { usePOSStore } from '../store/pos-store';
 import { cn } from '../lib/utils';
 import { Button, Badge } from './ui';
@@ -63,7 +64,7 @@ const Sidebar = ({ disabled }: SidebarProps) => {
             
             <div className="flex items-center gap-3 ml-1">
               <Grid3X3 className="w-4 h-4 text-gray-500" />
-              <span>All Items</span>
+              <span>{__('All Items')}</span>
             </div>
             
             <Badge variant="secondary" size="sm" className="text-xs text-gray-500 bg-gray-100 min-w-[24px] text-center">

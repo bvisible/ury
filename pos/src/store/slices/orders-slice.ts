@@ -3,6 +3,7 @@ import { OrderType } from '../../data/order-types';
 import { call } from '../../lib/frappe-sdk';
 import { getPOSInvoices, getPOSInvoiceItems, POSInvoiceItem, POSInvoiceTax } from '../../lib/invoice-api';
 import { searchPosInvoice } from '../../lib/invoice-api';
+import { __ } from '../lib/i18n';
 
 export interface POSInvoice {
   name: string;
@@ -41,12 +42,12 @@ export interface OrdersState {
 }
 
 export interface OrdersActions {
-  fetchOrders: (page?: number) => Promise<void>;
-  updateOrderStatus: (orderId: string, status: POSInvoice['status']) => Promise<void>;
-  goToNextPage: () => Promise<void>;
-  goToPreviousPage: () => Promise<void>;
-  setSelectedStatus: (status: POSInvoice['status']) => Promise<void>;
-  selectOrder: (order: POSInvoice) => Promise<void>;
+  fetchOrders: (page?: number) =>Promise<void>;
+  updateOrderStatus: (orderId: string, status: POSInvoice['status']) =>Promise<void>;
+  goToNextPage: () =>Promise<void>;
+  goToPreviousPage: () =>Promise<void>;
+  setSelectedStatus: (status: POSInvoice['status']) =>Promise<void>;
+  selectOrder: (order: POSInvoice) =>Promise<void>;
   clearSelectedOrder: () => void;
   setOrderSearchQuery: (query: string) => void;
 }

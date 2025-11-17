@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Menu, Search, User } from 'lucide-react';
 import { Button } from '../ui/button';
 import { cn } from '../../lib/utils';
+import { __ } from '../../lib/i18n';
 
 interface MobileHeaderProps {
   onMenuClick?: () => void;
@@ -31,7 +32,7 @@ export function MobileHeader({
         size="icon"
         onClick={onMenuClick}
         className="h-10 w-10"
-        aria-label="Open menu"
+        aria-label={__('Open menu')}
       >
         <Menu className="w-5 h-5 text-gray-700" />
       </Button>
@@ -40,7 +41,7 @@ export function MobileHeader({
       <div className="flex-1 flex justify-center">
         <img
           src="/assets/ury/pos/ury_pos.png"
-          alt="URY POS"
+          alt={__('URY POS')}
           className="h-8 object-contain"
         />
       </div>
@@ -52,7 +53,7 @@ export function MobileHeader({
           size="icon"
           onClick={onSearchClick}
           className="h-10 w-10"
-          aria-label="Search"
+          aria-label={__('Search')}
         >
           <Search className="w-5 h-5 text-gray-700" />
         </Button>
@@ -61,7 +62,7 @@ export function MobileHeader({
           size="icon"
           onClick={onUserClick}
           className="h-10 w-10"
-          aria-label="User menu"
+          aria-label={__('User menu')}
         >
           <User className="w-5 h-5 text-gray-700" />
         </Button>

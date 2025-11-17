@@ -7,6 +7,7 @@ import {
 import { cn } from '../lib/utils';
 import { usePOSStore } from '../store/pos-store';
 import PaymentDialog from './PaymentDialog';
+import { __ } from '../lib/i18n';
 
 const Footer = () => {
   const { activeOrders } = usePOSStore();
@@ -19,8 +20,8 @@ const Footer = () => {
   }, 0);
 
   const navItems = [
-    { icon: LayoutGrid, label: 'POS', path: '/' },
-    { icon: ClipboardList, label: 'Orders', path: '/orders' },
+    { icon: LayoutGrid, label: __('POS'), path: '/' },
+    { icon: ClipboardList, label: __('Orders'), path: '/orders' },
   ];
 
   return (

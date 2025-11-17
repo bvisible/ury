@@ -6,6 +6,7 @@ import { cn, formatCurrency } from '../../lib/utils';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { usePOSStore } from '../../store/pos-store';
+import { __ } from '../../lib/i18n';
 
 interface CheckoutSummarySheetProps {
   isOpen: boolean;
@@ -54,7 +55,7 @@ export function CheckoutSummarySheet({
               >
                 <ChevronLeft className="w-5 h-5 text-gray-500" />
               </button>
-              <h2 className="text-lg font-semibold text-gray-900">Order Summary</h2>
+              <h2 className="text-lg font-semibold text-gray-900">{__('Order Summary')}</h2>
             </div>
             <button
               onClick={onClose}
@@ -68,7 +69,7 @@ export function CheckoutSummarySheet({
         <Sheet.Content style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
           {/* Items List - Scrollable middle section */}
           <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">Order Items</h3>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">{__('Order Items')}</h3>
 
             {activeOrders.map((item) => {
               const itemTotal = calculateItemTotal(item);
@@ -123,7 +124,7 @@ export function CheckoutSummarySheet({
                   step="0.1"
                   value={discountPercentage}
                   onChange={(e) => setDiscountPercentage(e.target.value)}
-                  placeholder="0"
+                  placeholder={__('0')}
                   className="max-w-xs"
                 />
               </div>
@@ -134,7 +135,7 @@ export function CheckoutSummarySheet({
           <div className="flex-shrink-0 border-t border-gray-200 p-4 bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
             {/* Subtotal */}
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-gray-600">Subtotal</span>
+              <span className="text-sm text-gray-600">{__('Subtotal')}</span>
               <span className="text-sm font-medium text-gray-900">
                 {formatCurrency(subtotal)}
               </span>
@@ -154,7 +155,7 @@ export function CheckoutSummarySheet({
 
             {/* Total */}
             <div className="flex items-center justify-between mb-4 pt-2 border-t border-gray-200">
-              <span className="text-lg font-semibold text-gray-900">Total</span>
+              <span className="text-lg font-semibold text-gray-900">{__('Total')}</span>
               <span className="text-xl font-bold text-primary-600">
                 {formatCurrency(total)}
               </span>

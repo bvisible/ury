@@ -7,6 +7,7 @@ import { MobileOrderDetailsSheet } from '../../components/mobile/MobileOrderDeta
 import { Spinner } from '../../components/ui/spinner';
 import { formatCurrency } from '../../lib/utils';
 import { cn } from '../../lib/utils';
+import { __ } from '../../lib/i18n';
 
 type OrderStatus = 'Draft' | 'Unbilled' | 'Recently Paid' | 'Paid' | 'Consolidated' | 'Return';
 
@@ -100,7 +101,7 @@ export function MobileOrders() {
         ) : filteredOrders.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-gray-400">
             <p className="text-lg font-medium">No {storeSelectedStatus.toLowerCase()} orders</p>
-            <p className="text-sm mt-1">Orders will appear here</p>
+            <p className="text-sm mt-1">{__('Orders will appear here')}</p>
           </div>
         ) : (
           <div className="p-4 space-y-3">

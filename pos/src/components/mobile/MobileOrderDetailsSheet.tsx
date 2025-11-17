@@ -15,6 +15,7 @@ import { useRootStore } from '../../store/root-store';
 import { usePOSStore } from '../../store/pos-store';
 import { printOrder } from '../../lib/print';
 import type { POSInvoice } from '../../store/slices/orders-slice';
+import { __ } from '../../lib/i18n';
 
 interface MobileOrderDetailsSheetProps {
   isOpen: boolean;
@@ -225,23 +226,23 @@ export function MobileOrderDetailsSheet({
             <div className="flex-shrink-0 px-4 py-4 bg-gray-50 border-b border-gray-200">
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <p className="text-gray-500">Customer</p>
+                  <p className="text-gray-500">{__('Customer')}</p>
                   <p className="font-medium text-gray-900">{order.customer_name || order.customer}</p>
                 </div>
                 <div>
-                  <p className="text-gray-500">Time</p>
+                  <p className="text-gray-500">{__('Time')}</p>
                   <p className="font-medium text-gray-900">
                     {order.posting_date} {order.posting_time}
                   </p>
                 </div>
                 {order.restaurant_table && (
                   <div>
-                    <p className="text-gray-500">Table</p>
+                    <p className="text-gray-500">{__('Table')}</p>
                     <p className="font-medium text-gray-900">{order.restaurant_table}</p>
                   </div>
                 )}
                 <div>
-                  <p className="text-gray-500">Status</p>
+                  <p className="text-gray-500">{__('Status')}</p>
                   <p className="font-medium text-gray-900">{order.status}</p>
                 </div>
               </div>
@@ -249,7 +250,7 @@ export function MobileOrderDetailsSheet({
 
             {/* Order Items - Scrollable middle section */}
             <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4">
-              <h3 className="font-semibold text-gray-900 mb-3">Order Items</h3>
+              <h3 className="font-semibold text-gray-900 mb-3">{__('Order Items')}</h3>
               {selectedOrderLoading ? (
                 <div className="flex items-center justify-center py-8">
                   <Spinner message="Loading items..." />
@@ -270,7 +271,7 @@ export function MobileOrderDetailsSheet({
                       </div>
                     ))
                   ) : (
-                    <p className="text-gray-500 text-center py-4">No items in this order</p>
+                    <p className="text-gray-500 text-center py-4">{__('No items in this order')}</p>
                   )}
                 </div>
               )}
@@ -281,11 +282,11 @@ export function MobileOrderDetailsSheet({
               <div className="flex-shrink-0 border-t border-gray-200 px-4 py-4 bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
                 <div className="space-y-2 mb-4">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">Subtotal</span>
+                    <span className="text-gray-600">{__('Subtotal')}</span>
                     <span className="font-medium text-gray-900">{formatCurrency(subtotal)}</span>
                   </div>
                   <div className="flex items-center justify-between text-lg font-bold pt-2 border-t border-gray-200">
-                    <span className="text-gray-900">Total</span>
+                    <span className="text-gray-900">{__('Total')}</span>
                     <span className="text-primary-600">{formatCurrency(total)}</span>
                   </div>
                 </div>
@@ -326,7 +327,7 @@ export function MobileOrderDetailsSheet({
                         className="flex-1 h-12"
                       >
                         <Printer className="w-5 h-5 mr-2" />
-                        {isPrinting ? 'Printing...' : 'Print'}
+                        {isPrinting ? __('Printing...') : __('Print')}
                       </Button>
                       <Button
                         onClick={handlePaymentClick}
@@ -382,7 +383,7 @@ export function MobileOrderDetailsSheet({
         <Sheet.Container>
           <Sheet.Header>
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Cancel Order</h2>
+              <h2 className="text-lg font-semibold text-gray-900">{__('Cancel Order')}</h2>
               <button
                 onClick={() => setIsCancelDialogOpen(false)}
                 disabled={isCancelling}
@@ -411,7 +412,7 @@ export function MobileOrderDetailsSheet({
                   value={cancelReason}
                   onChange={(e) => setCancelReason(e.target.value)}
                   disabled={isCancelling}
-                  placeholder="Enter reason for cancellation..."
+                  placeholder={__('Enter reason for cancellation...')}
                   className="w-full h-32 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
                 />
               </div>
@@ -431,7 +432,7 @@ export function MobileOrderDetailsSheet({
                   disabled={isCancelling || !cancelReason.trim()}
                   className="flex-1 h-12 bg-red-600 hover:bg-red-700 text-white"
                 >
-                  {isCancelling ? 'Cancelling...' : 'Confirm Cancel'}
+                  {isCancelling ? __('Cancelling...') : __('Confirm Cancel')}
                 </Button>
               </div>
             </div>
@@ -446,9 +447,9 @@ export function MobileOrderDetailsSheet({
         <div className="fixed inset-0 z-[999999] flex items-center justify-center bg-black/50">
           <Spinner
             message={
-              isProcessing ? 'Processing payment...' :
-              isPrinting ? 'Printing...' :
-              'Cancelling order...'
+              isProcessing ? __('Processing payment...') :
+              isPrinting ? __('Printing...') :
+              __('Cancelling order...')
             }
           />
         </div>

@@ -1,15 +1,16 @@
 import { _ } from './i18n';
 import { call, db } from './frappe-sdk';
+import { __ } from '../lib/i18n';
 
 // Declare window extensions for Stripe Terminal SDK
 declare global {
   interface Window {
     neopay_integration?: {
       terminal: {
-        init: (terminalId: string) => Promise<any>;
-        connect: (terminalInstance: any) => Promise<void>;
-        collectPaymentMethod: (terminalInstance: any, clientSecret: string) => Promise<any>;
-        processPayment: (terminalInstance: any, paymentIntent: any) => Promise<any>;
+        init: (terminalId: string) =>Promise<any>;
+        connect: (terminalInstance: any) =>Promise<void>;
+        collectPaymentMethod: (terminalInstance: any, clientSecret: string) =>Promise<any>;
+        processPayment: (terminalInstance: any, paymentIntent: any) =>Promise<any>;
       };
     };
     stripeTerminalInstance?: any;
@@ -95,7 +96,7 @@ export const initializeStripeSDK = async (): Promise<boolean> => {
     // Verify SDK is available
     if (!window.neopay_integration || !window.neopay_integration.terminal) {
       console.error('[STRIPE] ❌ SDK loaded but neopay_integration.terminal not available');
-      throw new Error('Stripe Terminal SDK loaded but neopay_integration.terminal is not available');
+      throw new Error(__('Stripe Terminal SDK loaded but neopay_integration.terminal is not available'));
     }
 
     console.log('[STRIPE] ✅ initializeStripeSDK SUCCESS');
@@ -479,7 +480,7 @@ export const processPaymentWithTerminal = async (clientSecret: string): Promise<
   try {
     if (!window.stripeTerminalInstance) {
       console.error('[STRIPE] ❌ No terminal connected');
-      throw new Error('No terminal connected. Please connect to a terminal first.');
+      throw new Error(__('No terminal connected. Please connect to a terminal first.'));
     }
 
     console.log('[STRIPE] 📲 Collecting payment method from terminal...');

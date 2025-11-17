@@ -3,6 +3,7 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "../../lib/utils"
 import { ChevronDown } from "lucide-react"
 import * as RadixSelect from "@radix-ui/react-select"
+import { __ } from '../lib/i18n';
 
 const selectVariants = cva(
   "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-4 py-2 text-sm font-normal ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-colors",

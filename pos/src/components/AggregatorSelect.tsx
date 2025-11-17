@@ -43,7 +43,7 @@ export function AggregatorSelect({ disabled }: AggregatorSelectProps) {
         value={selectedAggregator?.customer || ''}
         onValueChange={handleAggregatorChange}
         disabled={disabled || loading}
-        placeholder={loading ? 'Loading aggregators...' : 'Select an aggregator'}
+        placeholder={loading ? __('Loading aggregators...') : __('Select an aggregator')}
       >
         {aggregators.map((aggregator) => (
           <SelectItem 

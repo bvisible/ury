@@ -13,6 +13,7 @@ import { useRootStore } from '../store/root-store';
 import type { RootState } from '../store/root-store';
 import { showToast } from './ui/toast';
 import { DINE_IN } from '../data/order-types';
+import { __ } from '../lib/i18n';
 
 const OrderPanel = () => {
   const { 
@@ -69,21 +70,21 @@ const OrderPanel = () => {
   const handleSubmit = async () => {
     try {
       if (!posProfile) {
-        throw new Error('POS Profile not found');
+        throw new Error(__('POS Profile not found'));
       }
 
       if (!user?.name) {
-        throw new Error('User not logged in');
+        throw new Error(__('User not logged in'));
       }
 
       // Validate customer/aggregator details
       if (selectedOrderType === 'Aggregators') {
         if (!selectedAggregator?.customer) {
-          showToast.error('Please select an aggregator before proceeding');
+          showToast.error(__('Please select an aggregator before proceeding'));
           return;
         }
       } else if (!selectedCustomer?.name) {
-        showToast.error('Please select a customer before proceeding');
+        showToast.error(__('Please select a customer before proceeding'));
         return;
       }
 
@@ -123,7 +124,7 @@ const OrderPanel = () => {
       
       // Reset all states after successful order submission
       resetOrderState();
-      showToast.success(isUpdatingOrder ? 'Order updated successfully' : 'Order created successfully');
+      showToast.success(isUpdatingOrder ? __('Order updated successfully') : __('Order created successfully'));
     } catch (error) {
       console.error('Failed to sync order:', error);
       // Frappe API error handling
@@ -133,12 +134,12 @@ const OrderPanel = () => {
           const messageObj = JSON.parse(messages[0]);
           showToast.error(messageObj.message || 'API error');
         } catch {
-          showToast.error('API error');
+          showToast.error(__('API error'));
         }
       } else if (error instanceof Error) {
         showToast.error(error.message);
       } else {
-        showToast.error('Failed to process order');
+        showToast.error(__('Failed to process order'));
       }
     } finally {
       setIsSubmitting(false);
@@ -152,20 +153,20 @@ const OrderPanel = () => {
       </div>
       
       <h3 className="text-lg font-semibold text-gray-900 mb-2">
-        Your cart is empty
+        {__('Your cart is empty')}
       </h3>
-      
+
       <p className="text-gray-500 text-sm mb-6 max-w-xs leading-relaxed">
-        Add items to get started with your order
+        {__('Add items to get started with your order')}
       </p>
-      
+
       <div className="flex items-center gap-2 text-blue-600 bg-blue-50 px-4 py-2 rounded-lg">
         <Plus className="w-4 h-4" />
-        <span className="text-sm font-medium">Click items to add them</span>
+        <span className="text-sm font-medium">{__('Click items to add them')}</span>
       </div>
-      
+
       <div className="mt-4 text-xs text-gray-400">
-        Double-click for customization options
+        {__('Double-click for customization options')}
       </div>
     </div>
   );
@@ -222,7 +223,7 @@ const OrderPanel = () => {
                       variant="ghost"
                       size="icon"
                       className="text-blue-600 hover:text-blue-700"
-                      title="Edit item"
+                      title={__('Edit item')}
                       disabled={isInteractionDisabled}
                     >
                       <Edit className="w-4 h-4" />
@@ -277,7 +278,7 @@ const OrderPanel = () => {
                 className="w-full text-gray-600 hover:text-gray-800 mt-4"
                 disabled={isInteractionDisabled}
               >
-                Clear cart
+                {__('Clear cart')}
               </Button>
             )}
           </div>
@@ -294,11 +295,11 @@ const OrderPanel = () => {
                     orderComment ? "text-blue-600" : "text-gray-500 hover:text-gray-700"
                   )}
                   disabled={isInteractionDisabled}
-                  title={orderComment ? "Edit comment" : "Add comment"}
+                  title={orderComment ? __("Edit comment") : __("Add comment")}
                 >
                   <MessageSquare className="w-4 h-4" />
                 </Button>
-                <span className="text-lg font-semibold">Total</span>
+                <span className="text-lg font-semibold">{__('Total')}</span>
               </div>
               <span className="text-lg font-semibold">{formatCurrency(total)}</span>
             </div>
@@ -312,12 +313,12 @@ const OrderPanel = () => {
               {isSubmitting ? (
                 <div className="flex items-center">
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  {isUpdatingOrder ? 'Updating Order...' : 'Processing Order...'}
+                  {isUpdatingOrder ? __('Updating Order...') : __('Processing Order...')}
                 </div>
               ) : isUpdatingOrder ? (
-                'Update Order'
+                __('Update Order')
               ) : (
-                'Add New Order'
+                __('Add New Order')
               )}
             </Button>
           </div>

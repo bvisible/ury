@@ -1,6 +1,7 @@
 import { StateCreator } from 'zustand';
 import { AuthSlice } from './auth-slice';
 import { getCombinedPosProfile, PosProfileCombined } from '../../lib/pos-profile-api';
+import { __ } from '../lib/i18n';
 
 interface RolePermission {
   name: string;
@@ -28,7 +29,7 @@ export interface ConfigState {
 export interface ConfigActions {
   checkAccess: () => void;
   setAllowedRoles: (roles: string[]) => void;
-  fetchPosProfile: (forceRefresh?: boolean) => Promise<void>;
+  fetchPosProfile: (forceRefresh?: boolean) =>Promise<void>;
 }
 
 export type ConfigSlice = ConfigState & ConfigActions;

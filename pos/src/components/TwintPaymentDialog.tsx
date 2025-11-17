@@ -243,7 +243,7 @@ const TwintPaymentDialog: React.FC<TwintPaymentDialogProps> = ({
                   <div className="bg-white p-4 rounded-lg border-2 border-gray-300">
                     <img
                       src={`data:image/png;base64,${paymentRequest.qr_code}`}
-                      alt="TWINT QR Code"
+                      alt={__('TWINT QR Code')}
                       className="w-64 h-64"
                     />
                   </div>

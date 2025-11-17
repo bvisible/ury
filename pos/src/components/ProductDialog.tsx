@@ -4,6 +4,7 @@ import { OrderItem, usePOSStore } from '../store/pos-store';
 import { cn, formatCurrency } from '../lib/utils';
 import { Button, Dialog, DialogContent, Input } from './ui';
 import { db } from '../lib/frappe-sdk';
+import { __ } from '../lib/i18n';
 
 interface Variant {
   id: string;
@@ -361,9 +362,9 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
           </div>
 
           <div className="mt-6">
-            <h3 className="text-lg font-semibold mb-3">Special Instructions</h3>
+            <h3 className="text-lg font-semibold mb-3">{__('Special Instructions')}</h3>
             <Input
-              placeholder="Add any special instructions or notes for this item..."
+              placeholder={__('Add any special instructions or notes for this item...')}
               value={comments}
               onChange={(e: ChangeEvent<HTMLInputElement>) => setComments(e.target.value)}
               className="resize-none"
@@ -371,7 +372,7 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
           </div>
 
           <div className="mt-6">
-            <h3 className="text-lg font-semibold mb-3">Quantity</h3>
+            <h3 className="text-lg font-semibold mb-3">{__('Quantity')}</h3>
             <div className="flex items-center space-x-2">
               <Button
                 onClick={handleDecrement}
@@ -408,7 +409,7 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
           {/* Variants Section  */}
           {variantDetails.length > 0 && (
             <div className="mt-6">
-              <h3 className="text-lg font-semibold mb-3">Variants</h3>
+              <h3 className="text-lg font-semibold mb-3">{__('Variants')}</h3>
               <div className="flex gap-2 flex-wrap">
                 {variantDetails.map((variant: any) => {
                   const menuVariant = menuItems.find((m: any) => m.item === variant.id);
@@ -438,12 +439,12 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
         <div className="h-auto md:w-1/3 p-4 md:p-6 border-t md:border-t-0 md:border-l border-gray-200 overflow-y-auto flex flex-col flex-1">
           <div className="overflow-y-auto mb-6">
             {isAddonLoading ? (
-              <div className="mb-6 flex items-center justify-center text-gray-500">Loading add-ons...</div>
+              <div className="mb-6 flex items-center justify-center text-gray-500">{__('Loading add-ons...')}</div>
             ) : addonError ? (
               <div className="flex items-center justify-center text-red-500">{addonError}</div>
             ) : addonDetails.length > 0 ? (
               <div className="mb-6">
-                <h3 className="text-lg font-semibold mb-3">Add-ons</h3>
+                <h3 className="text-lg font-semibold mb-3">{__('Add-ons')}</h3>
                 <div className="space-y-2">
                   {addonDetails.map((addon: any) => (
                     <button
@@ -465,13 +466,13 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
                 </div>
               </div>
             ) : (
-              <div className="flex items-center justify-center text-gray-400 text-sm">No add ons</div>
+              <div className="flex items-center justify-center text-gray-400 text-sm">{__('No add ons')}</div>
             )}
           </div>
           {/* Always show total section at the end */}
           <div className="mt-auto pt-2 border-t border-gray-200">
             <div className="flex justify-between items-center text-lg font-semibold">
-              <span>Total&nbsp;</span>
+              <span>{__('Total&nbsp;')}</span>
               <span>{formatCurrency(total)}</span>
             </div>
             <button
@@ -480,7 +481,7 @@ const ProductDialog: React.FC<ProductDialogProps> = ({
               className="w-full mt-4 h-12 px-4 py-2 bg-primary-600 text-white font-semibold rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={numericQuantity === 0}
             >
-              {editMode || existingCartItem ? 'Update Order' : 'Add to Order'}
+              {editMode || existingCartItem ? __('Update Order') : __('Add to Order')}
             </button>
           </div>
         </div>

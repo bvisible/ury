@@ -10,6 +10,7 @@ import { getTableOrder, TableOrder } from '../lib/order-api';
 import { getPaymentModes } from '../lib/payment-api';
 import { getStripeTerminalConfig } from '../lib/stripe-terminal-api';
 import { getTwintConfig } from '../lib/twint-api';
+import { __ } from '../lib/i18n';
 
 // Constants
 const MAX_QUANTITY = 99;
@@ -148,14 +149,14 @@ interface POSState {
 }
 
 interface POSStore extends POSState {
-  fetchMenuItems: () => Promise<void>;
-  fetchAggregatorMenu: (aggregator: string) => Promise<void>;
-  fetchCategories: () => Promise<void>;
-  fetchPaymentModes: () => Promise<void>;
-  addToOrder: (item: OrderItem) => Promise<void>;
-  removeFromOrder: (uniqueId: string) => Promise<void>;
-  updateQuantity: (uniqueId: string, quantity: number) => Promise<void>;
-  clearOrder: () => Promise<void>;
+  fetchMenuItems: () =>Promise<void>;
+  fetchAggregatorMenu: (aggregator: string) =>Promise<void>;
+  fetchCategories: () =>Promise<void>;
+  fetchPaymentModes: () =>Promise<void>;
+  addToOrder: (item: OrderItem) =>Promise<void>;
+  removeFromOrder: (uniqueId: string) =>Promise<void>;
+  updateQuantity: (uniqueId: string, quantity: number) =>Promise<void>;
+  clearOrder: () =>Promise<void>;
   setSelectedCategory: (category: string) => void;
   setSearchQuery: (query: string) => void;
   setSelectedCustomer: (customer: Customer | null) => void;
@@ -163,29 +164,29 @@ interface POSStore extends POSState {
   setSelectedOrderType: (type: OrderType) => void;
   setQuickFilter: (filter: 'all' | 'special') => void;
   setSelectedItem: (item: MenuItem | null) => void;
-  initializeCart: () => Promise<void>;
-  processPayment: (paymentMode: string, amount: number) => Promise<void>;
-  updateOrderStatus: (orderId: string, status: Order['status']) => Promise<void>;
-  fetchPosProfile: () => Promise<void>;
-  fetchCustomerGroups: () => Promise<void>;
-  fetchTerritories: () => Promise<void>;
-  fetchCurrencySymbol: () => Promise<void>;
+  initializeCart: () =>Promise<void>;
+  processPayment: (paymentMode: string, amount: number) =>Promise<void>;
+  updateOrderStatus: (orderId: string, status: Order['status']) =>Promise<void>;
+  fetchPosProfile: () =>Promise<void>;
+  fetchCustomerGroups: () =>Promise<void>;
+  fetchTerritories: () =>Promise<void>;
+  fetchCurrencySymbol: () =>Promise<void>;
   getCartTotals: () => CartTotals;
   itemExistsInCart: (uniqueId: string) => boolean;
   validateQuantity: (quantity: number) => boolean;
   getItemPrice: (item: OrderItem) => number;
   getItemQuantityFromCart: (item: MenuItem) => number;
-  loadTableOrder: (table: string) => Promise<void>;
-  loadOrderForEditing: (orderData: any, orderItems: any[]) => Promise<void>;
+  loadTableOrder: (table: string) =>Promise<void>;
+  loadOrderForEditing: (orderData: any, orderItems: any[]) =>Promise<void>;
   clearTableOrder: () => void;
   isMenuInteractionDisabled: () => boolean;
   isOrderInteractionDisabled: () => boolean;
-  initializeApp: () => Promise<void>;
+  initializeApp: () =>Promise<void>;
   setOrderForUpdate: (orderId: string | null) => void;
   resetOrderState: () => void;
   setSelectedAggregator: (aggregator: Aggregator | null) => void;
   setOrderComment: (comment: string) => void;
-  fetchPaymentProcessorConfigs: () => Promise<void>;
+  fetchPaymentProcessorConfigs: () =>Promise<void>;
   addProcessorPayment: (payment: ProcessorPayment) => void;
   clearProcessorPayments: () => void;
   isSpecialPaymentMode: (modeOfPayment: string) => boolean;

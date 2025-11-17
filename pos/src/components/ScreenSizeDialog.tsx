@@ -1,5 +1,6 @@
 import { Monitor, Smartphone, ExternalLink } from 'lucide-react';
 import { Button } from './ui';
+import { __ } from '../lib/i18n';
 
 const ScreenSizeDialog = () => {
   const handleSwitchToVersion1 = () => {
@@ -41,7 +42,7 @@ const ScreenSizeDialog = () => {
               Current screen width: <span className="font-semibold text-gray-800">{window.innerWidth}px</span>
             </p>
             <p className="text-sm text-gray-600">
-              Required: <span className="font-semibold text-gray-800">1024px or larger</span>
+              Required: <span className="font-semibold text-gray-800">{__('1024px or larger')}</span>
             </p>
           </div>
           

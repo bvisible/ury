@@ -11,6 +11,7 @@ import { Spinner } from '../components/ui/spinner';
 import InitialLoader from '../components/InitialLoader';
 import { useIsMobile } from '../hooks/useMediaQuery';
 import { MobilePOSLayout } from '../components/mobile/MobilePOSLayout';
+import { __ } from '../lib/i18n';
 
 export default function POS() {
   const isMobile = useIsMobile();
@@ -90,7 +91,7 @@ export default function POS() {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
-          <p className="text-xl font-semibold text-red-600 mb-2">Failed to load POS</p>
+          <p className="text-xl font-semibold text-red-600 mb-2">{__('Failed to load POS')}</p>
           <p className="text-gray-600">{error}</p>
           <button
             onClick={() => window.location.reload()}
@@ -115,7 +116,7 @@ export default function POS() {
     return (
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-lg font-medium text-red-600">Error loading menu</p>
+          <p className="text-lg font-medium text-red-600">{__('Error loading menu')}</p>
           <p className="text-sm text-gray-500 mt-2">{error}</p>
         </div>
       </div>
@@ -148,8 +149,8 @@ export default function POS() {
                 disabled={isMenuInteractionDisabled()}
               /> */}
               
-              <QuickFilterButton filter="all" icon={Star} label="All" />
-              <QuickFilterButton filter="special" icon={TrendingUp} label="Special Items" />
+              <QuickFilterButton filter="all" icon={Star} label={__('All')} />
+              <QuickFilterButton filter="special" icon={TrendingUp} label={__('Special Items')} />
             </div>
           </div>
         </div>

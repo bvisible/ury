@@ -7,6 +7,7 @@ import { cn } from '../lib/utils';
 import { getRooms, getTables, Room, Table } from '../lib/table-api';
 import { Badge } from './ui/badge';
 import { Spinner } from './ui/spinner';
+import { __ } from '../lib/i18n';
 
 interface Props {
   onClose: () => void;
@@ -114,7 +115,7 @@ const TableSelectionDialog: React.FC<Props> = ({ onClose }) => {
     <Dialog open>
       <DialogContent className="bg-white rounded-lg w-full h-5/6 max-w-2xl mx-auto p-0 overflow-y-auto">
         <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-          <h2 className="text-lg font-semibold text-gray-900">Select Table</h2>
+          <h2 className="text-lg font-semibold text-gray-900">{__('Select Table')}</h2>
           <Button onClick={onClose} variant="ghost" size="icon">
             <X className="w-5 h-5" />
           </Button>
@@ -133,7 +134,7 @@ const TableSelectionDialog: React.FC<Props> = ({ onClose }) => {
           ) : rooms.length === 0 ? (
             <div className="mb-6 flex flex-col items-center justify-center gap-2 text-gray-400">
               <Square className="w-8 h-8 mb-1" />
-              <span>No rooms found</span>
+              <span>{__('No rooms found')}</span>
             </div>
           ) : (
             <div className="flex gap-2 mb-6">
@@ -164,7 +165,7 @@ const TableSelectionDialog: React.FC<Props> = ({ onClose }) => {
           ) : tables.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-2 text-gray-400 mt-8">
               <Square className="w-8 h-8 mb-1" />
-              <span>No tables found</span>
+              <span>{__('No tables found')}</span>
             </div>
           ) : (
             <div className="grid grid-cols-3 gap-6">

@@ -3,6 +3,7 @@ import { useRootStore } from '../store/root-store';
 import { Button } from './ui/button';
 import { Spinner } from './ui/spinner';
 import { RefreshCw } from 'lucide-react';
+import { __ } from '../lib/i18n';
 
 interface Props {
   children: React.ReactNode;
@@ -49,8 +50,8 @@ const AuthGuard: React.FC<Props> = ({ children }) => {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="text-red-600 text-xl mb-4">⚠️</div>
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">Access Denied</h2>
+          <div className="text-red-600 text-xl mb-4">{__('⚠️')}</div>
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">{__('Access Denied')}</h2>
           <p className="text-gray-600">{authError || configError}</p>
         </div>
       </div>
@@ -66,9 +67,9 @@ const AuthGuard: React.FC<Props> = ({ children }) => {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="text-amber-600 text-xl mb-4">⚠️</div>
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">Configuration Error</h2>
-          <p className="text-gray-600">POS Profile not found or not configured.</p>
+          <div className="text-amber-600 text-xl mb-4">{__('⚠️')}</div>
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">{__('Configuration Error')}</h2>
+          <p className="text-gray-600">{__('POS Profile not found or not configured.')}</p>
         </div>
       </div>
     );
@@ -78,9 +79,9 @@ const AuthGuard: React.FC<Props> = ({ children }) => {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="text-amber-600 text-xl mb-4">🔒</div>
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">Permission Required</h2>
-          <p className="text-gray-600">You do not have permission to access this application.</p>
+          <div className="text-amber-600 text-xl mb-4">{__('🔒')}</div>
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">{__('Permission Required')}</h2>
+          <p className="text-gray-600">{__('You do not have permission to access this application.')}</p>
           <p className="text-sm text-gray-500 mt-2">Required roles: {posProfile.role_allowed_for_billing.map(r => r.role).join(', ')}</p>
           <Button 
             variant="outline"

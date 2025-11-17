@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { MessageSquare, X } from 'lucide-react';
 import { Button } from './ui';
+import { __ } from '../lib/i18n';
 
 interface CommentDialogProps {
   isOpen: boolean;
@@ -52,7 +53,7 @@ const CommentDialog = ({ isOpen, onClose, onSave, initialComment = '' }: Comment
             id="comment"
             value={comment}
             onChange={(e) => setComment(e.target.value)}
-            placeholder="Enter any special instructions or comments..."
+            placeholder={__('Enter any special instructions or comments...')}
             className="w-full h-32 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
             autoFocus
           />

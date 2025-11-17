@@ -25,6 +25,15 @@ def get_context(context):
 		except Exception as e:
 			raise frappe.SessionBootFailed from e
 
+	# Load translations for ury app
+	if frappe.session.user != "Guest":
+		from frappe.translate import get_all_translations
+		lang = frappe.local.lang or "en"
+		messages = get_all_translations(lang)
+		if "__messages" not in boot:
+			boot["__messages"] = {}
+		boot["__messages"].update(messages)
+
 	# add server_script_enabled in boot
 	if "server_script_enabled" in frappe.conf:
 		enabled = frappe.conf.server_script_enabled

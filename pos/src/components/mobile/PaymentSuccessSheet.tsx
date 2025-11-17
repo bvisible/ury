@@ -4,6 +4,7 @@ import { CheckCircle2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { formatCurrency } from '../../lib/utils';
 import { Button } from '../ui/button';
+import { __ } from '../../lib/i18n';
 
 interface PaymentSuccessSheetProps {
   isOpen: boolean;
@@ -62,11 +63,11 @@ export function PaymentSuccessSheet({
               className="w-full bg-gray-50 rounded-lg p-6 mb-6"
             >
               <div className="flex items-center justify-between mb-3">
-                <span className="text-sm text-gray-600">Invoice Number</span>
+                <span className="text-sm text-gray-600">{__('Invoice Number')}</span>
                 <span className="text-sm font-semibold text-gray-900">{invoiceNumber}</span>
               </div>
               <div className="flex items-center justify-between pt-3 border-t border-gray-200">
-                <span className="text-base font-semibold text-gray-700">Total Amount</span>
+                <span className="text-base font-semibold text-gray-700">{__('Total Amount')}</span>
                 <span className="text-xl font-bold text-primary-600">
                   {formatCurrency(totalAmount)}
                 </span>

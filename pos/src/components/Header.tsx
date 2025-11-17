@@ -17,6 +17,7 @@ import { logout } from '../lib/auth-api';
 import { showToast } from './ui/toast';
 import POSClosingFormDialog from './POSClosingFormDialog';
 import { getCurrentPOSOpening } from '../lib/pos-opening-api';
+import { __ } from '../lib/i18n';
 
 const Header = () => {
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -31,15 +32,15 @@ const Header = () => {
   const [orderSearchInput, setOrderSearchInput] = useState(orderSearchQuery);
 
   // Determine placeholder and handlers based on route
-  let searchPlaceholder = 'Search orders, menu items, or customers...';
+  let searchPlaceholder = __('Search orders, menu items, or customers...');
   let searchValue: string | undefined = undefined;
   let searchOnChange: ((e: React.ChangeEvent<HTMLInputElement>) => void) | undefined = undefined;
   if (location.pathname === '/orders') {
-    searchPlaceholder = 'Search Orders';
+    searchPlaceholder = __('Search Orders');
     searchValue = orderSearchInput;
     searchOnChange = (e) => setOrderSearchInput(e.target.value);
   } else if (location.pathname === '/') {
-    searchPlaceholder = 'Search Menu';
+    searchPlaceholder = __('Search Menu');
     searchValue = searchQuery;
     searchOnChange = (e) => setSearchQuery(e.target.value);
   }
@@ -94,7 +95,7 @@ const Header = () => {
       await logout();
       window.location.href = '/login?redirect-to=%2Fpos';
     } catch (error) {
-      showToast.error('Failed to logout. Please try again.');
+      showToast.error(__('Failed to logout. Please try again.'));
     }
   };
 
@@ -112,20 +113,20 @@ const Header = () => {
       // Get current POS opening entry
       const opening = await getCurrentPOSOpening();
       if (!opening) {
-        showToast.error('No POS session is currently open');
+        showToast.error(__('No POS session is currently open'));
         return;
       }
       setPosOpeningEntry(opening);
       setShowClosingDialog(true);
       setShowUserMenu(false);
     } catch (error) {
-      showToast.error('Failed to load POS session');
+      showToast.error(__('Failed to load POS session'));
     }
   };
 
   const handleClosingSuccess = () => {
     setShowClosingDialog(false);
-    showToast.success('POS closed successfully');
+    showToast.success(__('POS closed successfully'));
     // Reload the page to reflect changes
     setTimeout(() => {
       window.location.reload();
@@ -140,7 +141,7 @@ const Header = () => {
         <Link to="/" className="flex items-center space-x-3">
             <img 
               src="/assets/ury/pos/ury_pos.png" 
-              alt="URY POS" 
+              alt={__('URY POS')} 
               className="h-10 w-auto"
             />
           </Link>
@@ -157,7 +158,7 @@ const Header = () => {
             />
             <div className="flex items-center gap-2 text-gray-400">
               <Command className="w-4 h-4" />
-              <span>K</span>
+              <span>{__('K')}</span>
             </div>
         </div>
 
@@ -191,7 +192,7 @@ const Header = () => {
                     onClick={() => window.location.href = '/app'}
                   >
                     <Monitor className="w-4 h-4 mr-3" />
-                    Switch To Desk
+                    {__('Switch To Desk')}
                   </Button>
                   <Button
                     variant="ghost"
@@ -199,7 +200,7 @@ const Header = () => {
                     onClick={handleClearCache}
                   >
                     <RefreshCw className="w-4 h-4 mr-3" />
-                    Clear Cache
+                    {__('Clear Cache')}
                   </Button>
                   <Button
                     variant="ghost"
@@ -207,7 +208,7 @@ const Header = () => {
                     onClick={handleClosePOS}
                   >
                     <DoorClosed className="w-4 h-4 mr-3" />
-                    Close POS
+                    {__('Close POS')}
                   </Button>
                   <Button
                     variant="ghost"
@@ -215,7 +216,7 @@ const Header = () => {
                     onClick={handleLogout}
                   >
                     <LogOut className="w-4 h-4 mr-3" />
-                    Logout
+                    {__('Logout')}
                   </Button>
                 </div>
               </div>

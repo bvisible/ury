@@ -1,0 +1,720 @@
+# ============================================
+# Complete POS React Application Translations
+# ============================================
+
+msgid "*"
+msgstr "*"
+
+msgid ", VariantProps"
+msgstr ", VariantProps"
+
+msgid "0"
+msgstr "0"
+
+msgid "0 && remainingBalance"
+msgstr "0 && remainingBalance"
+
+msgid "0.00"
+msgstr "0,00"
+
+msgid "1024px or larger"
+msgstr "1024px ou plus"
+
+msgid "= 0 && num"
+msgstr "= 0 && num"
+
+msgid "= MIN_QUANTITY && quantity"
+msgstr "= MIN_QUANTITY && quantity"
+
+msgid "API error"
+msgstr "Erreur API"
+
+msgid "Access Denied"
+msgstr "Accès refusé"
+
+msgid "Add New Customer"
+msgstr "Ajouter un nouveau client"
+
+msgid "Add any special instructions or notes for this item..."
+msgstr "Ajouter des instructions ou notes spéciales pour cet article..."
+
+msgid "Add items to get started"
+msgstr "Ajouter des articles pour commencer"
+
+msgid "Add-ons"
+msgstr "Options supplémentaires"
+
+msgid "Adjustment"
+msgstr "Ajustement"
+
+msgid "Adresse IP"
+msgstr "Adresse IP"
+
+msgid "All Items"
+msgstr "Tous les articles"
+
+msgid "Amount"
+msgstr "Montant"
+
+msgid "Amount due (for info)"
+msgstr "Montant dû (pour info)"
+
+msgid "Amount to pay"
+msgstr "Montant à payer"
+
+msgid "Annuler"
+msgstr "Annuler"
+
+msgid "Annuler le paiement"
+msgstr "Annuler le paiement"
+
+msgid "Badges"
+msgstr "Badges"
+
+msgid "Buttons"
+msgstr "Boutons"
+
+msgid "Cancel"
+msgstr "Annuler"
+
+msgid "Cancel Order"
+msgstr "Annuler la commande"
+
+msgid "Cancel order"
+msgstr "Annuler la commande"
+
+msgid "Cancelled"
+msgstr "Annulé"
+
+msgid "Cash Difference Detected"
+msgstr "Différence de caisse détectée"
+
+msgid "Checking POS status..."
+msgstr "Vérification du statut POS..."
+
+msgid "Clear"
+msgstr "Effacer"
+
+msgid "Clear Cache"
+msgstr "Vider le cache"
+
+msgid "Click items to add them"
+msgstr "Cliquer sur les articles pour les ajouter"
+
+msgid "Click on any order card to view its details"
+msgstr "Cliquer sur une commande pour voir ses détails"
+
+msgid "Close"
+msgstr "Fermer"
+
+msgid "Close POS"
+msgstr "Fermer la caisse"
+
+msgid "Closing Amount"
+msgstr "Montant de clôture"
+
+msgid "Closing POS..."
+msgstr "Fermeture de la caisse..."
+
+msgid "Company"
+msgstr "Société"
+
+msgid "Completed"
+msgstr "Terminé"
+
+msgid "Configuration Error"
+msgstr "Erreur de configuration"
+
+msgid "Confirm"
+msgstr "Confirmer"
+
+msgid "Customer"
+msgstr "Client"
+
+msgid "Customer Group"
+msgstr "Groupe de clients"
+
+msgid "Danger"
+msgstr "Danger"
+
+msgid "Default"
+msgstr "Par défaut"
+
+msgid "Default Input"
+msgstr "Entrée par défaut"
+
+msgid "Default Select"
+msgstr "Sélection par défaut"
+
+msgid "Dialog"
+msgstr "Dialogue"
+
+msgid "Different button variants and sizes"
+msgstr "Différentes variantes et tailles de boutons"
+
+msgid "Different input variants and states"
+msgstr "Différentes variantes et états d'entrée"
+
+msgid "Discount"
+msgstr "Remise"
+
+msgid "Edit item"
+msgstr "Modifier l'article"
+
+msgid "Edit order"
+msgstr "Modifier la commande"
+
+msgid "En ligne"
+msgstr "En ligne"
+
+msgid "Enables test terminal for development and testing purposes"
+msgstr "Active le terminal de test pour le développement et les tests"
+
+msgid "Enter any special instructions or comments..."
+msgstr "Saisir des instructions ou commentaires spéciaux..."
+
+msgid "Enter cancel reason"
+msgstr "Saisir le motif d'annulation"
+
+msgid "Enter closing amounts for each payment method"
+msgstr "Saisir les montants de clôture pour chaque moyen de paiement"
+
+msgid "Enter reason for cancellation..."
+msgstr "Saisir le motif d'annulation..."
+
+msgid "Enter text..."
+msgstr "Saisir du texte..."
+
+msgid "Error Input"
+msgstr "Entrée en erreur"
+
+msgid "Error Select"
+msgstr "Sélection en erreur"
+
+msgid "Error loading menu"
+msgstr "Erreur de chargement du menu"
+
+msgid "Error loading menu items"
+msgstr "Erreur de chargement des articles du menu"
+
+msgid "Error state"
+msgstr "État d'erreur"
+
+msgid "Example Dialog"
+msgstr "Exemple de dialogue"
+
+msgid "Expected"
+msgstr "Attendu"
+
+msgid "Extra Small"
+msgstr "Très petit"
+
+msgid "Failed to close POS. Please try again."
+msgstr "Échec de fermeture de la caisse. Veuillez réessayer."
+
+msgid "Failed to create POS opening entry. Please try again."
+msgstr "Échec de création de l'entrée d'ouverture. Veuillez réessayer."
+
+msgid "Failed to fetch POS invoice items"
+msgstr "Échec de récupération des articles de facture"
+
+msgid "Failed to fetch POS invoices"
+msgstr "Échec de récupération des factures"
+
+msgid "Failed to fetch invoice print HTML"
+msgstr "Échec de récupération du HTML d'impression"
+
+msgid "Failed to fetch order details"
+msgstr "Échec de récupération des détails de commande"
+
+msgid "Failed to load POS"
+msgstr "Échec de chargement de la caisse"
+
+msgid "Failed to load POS session"
+msgstr "Échec de chargement de la session"
+
+msgid "Failed to load closing data. Please try again."
+msgstr "Échec de chargement des données de clôture. Veuillez réessayer."
+
+msgid "Failed to load order details"
+msgstr "Échec de chargement des détails de commande"
+
+msgid "Failed to load orders"
+msgstr "Échec de chargement des commandes"
+
+msgid "Failed to load payment methods. Please try again."
+msgstr "Échec de chargement des moyens de paiement. Veuillez réessayer."
+
+msgid "Failed to logout. Please try again."
+msgstr "Échec de déconnexion. Veuillez réessayer."
+
+msgid "Failed to process order"
+msgstr "Échec de traitement de la commande"
+
+msgid "Failed to update invoice status"
+msgstr "Échec de mise à jour du statut de facture"
+
+msgid "Ghost"
+msgstr "Fantôme"
+
+msgid "Grand Total"
+msgstr "Total général"
+
+msgid "Hors ligne"
+msgstr "Hors ligne"
+
+msgid "ID de transaction"
+msgstr "ID de transaction"
+
+msgid "Info"
+msgstr "Info"
+
+msgid "Inputs"
+msgstr "Entrées"
+
+msgid "Invoice Number"
+msgstr "Numéro de facture"
+
+msgid "Invoices"
+msgstr "Factures"
+
+msgid "K"
+msgstr "K"
+
+msgid "Large"
+msgstr "Grand"
+
+msgid "Link"
+msgstr "Lien"
+
+msgid "Loading URY POS..."
+msgstr "Chargement URY POS..."
+
+msgid "Loading add-ons..."
+msgstr "Chargement des options..."
+
+msgid "Loading closing data..."
+msgstr "Chargement des données de clôture..."
+
+msgid "Loading payment methods..."
+msgstr "Chargement des moyens de paiement..."
+
+msgid "Loading..."
+msgstr "Chargement..."
+
+msgid "Logout"
+msgstr "Déconnexion"
+
+msgid "Modal dialog component"
+msgstr "Composant de dialogue modal"
+
+msgid "Mode of Payment"
+msgstr "Moyen de paiement"
+
+msgid "Mode simulation - Paiement de test"
+msgstr "Mode simulation - Paiement de test"
+
+msgid "Name"
+msgstr "Nom"
+
+msgid "Name is required"
+msgstr "Le nom est requis"
+
+msgid "Ne fermez pas cette fenêtre"
+msgstr "Ne fermez pas cette fenêtre"
+
+msgid "Net Total"
+msgstr "Total net"
+
+msgid "No POS session is currently open"
+msgstr "Aucune session de caisse n'est ouverte"
+
+msgid "No add ons"
+msgstr "Aucune option"
+
+msgid "No connection token received from server"
+msgstr "Aucun jeton de connexion reçu du serveur"
+
+msgid "No customers found"
+msgstr "Aucun client trouvé"
+
+msgid "No items found"
+msgstr "Aucun article trouvé"
+
+msgid "No items in this order"
+msgstr "Aucun article dans cette commande"
+
+msgid "No options"
+msgstr "Aucune option"
+
+msgid "No orders found"
+msgstr "Aucune commande trouvée"
+
+msgid "No reader connected"
+msgstr "Aucun lecteur connecté"
+
+msgid "No rooms found"
+msgstr "Aucune salle trouvée"
+
+msgid "No tables found"
+msgstr "Aucune table trouvée"
+
+msgid "No terminal connected. Please connect to a terminal first."
+msgstr "Aucun terminal connecté. Veuillez d'abord connecter un terminal."
+
+msgid "Nom"
+msgstr "Nom"
+
+msgid "Numéro de série"
+msgstr "Numéro de série"
+
+msgid "Open POS"
+msgstr "Ouvrir la caisse"
+
+msgid "Open menu"
+msgstr "Ouvrir le menu"
+
+msgid "Opening"
+msgstr "Ouverture"
+
+msgid "Opening Amount"
+msgstr "Montant d'ouverture"
+
+msgid "Opening Balance Details"
+msgstr "Détails du solde d'ouverture"
+
+msgid "Opening POS..."
+msgstr "Ouverture de la caisse..."
+
+msgid "Option 1"
+msgstr "Option 1"
+
+msgid "Option 2"
+msgstr "Option 2"
+
+msgid "Option 3"
+msgstr "Option 3"
+
+msgid "Order Items"
+msgstr "Articles de la commande"
+
+msgid "Order Summary"
+msgstr "Résumé de la commande"
+
+msgid "Order Type"
+msgstr "Type de commande"
+
+msgid "Order cancelled successfully"
+msgstr "Commande annulée avec succès"
+
+msgid "Order moved to Draft after printing."
+msgstr "Commande passée en brouillon après impression."
+
+msgid "Orders"
+msgstr "Commandes"
+
+msgid "Orders will appear here"
+msgstr "Les commandes apparaîtront ici"
+
+msgid "Outline"
+msgstr "Contour"
+
+msgid "POS"
+msgstr "Caisse"
+
+msgid "POS Profile"
+msgstr "Profil de caisse"
+
+msgid "POS Profile not found"
+msgstr "Profil de caisse introuvable"
+
+msgid "POS Profile not found or not configured."
+msgstr "Profil de caisse introuvable ou non configuré."
+
+msgid "POS closed successfully"
+msgstr "Caisse fermée avec succès"
+
+msgid "Paid"
+msgstr "Payé"
+
+msgid "Paiement réussi !"
+msgstr "Paiement réussi !"
+
+msgid "Paiement simulé"
+msgstr "Paiement simulé"
+
+msgid "Pay with"
+msgstr "Payer avec"
+
+msgid "Payment"
+msgstr "Paiement"
+
+msgid "Payment Methods"
+msgstr "Moyens de paiement"
+
+msgid "Payment Reconciliation"
+msgstr "Rapprochement de paiement"
+
+msgid "Payment amount is less than order total"
+msgstr "Le montant du paiement est inférieur au total de la commande"
+
+msgid "Payment collection was cancelled"
+msgstr "La collecte du paiement a été annulée"
+
+msgid "Payment successful"
+msgstr "Paiement réussi"
+
+msgid "Pending"
+msgstr "En attente"
+
+msgid "Permission Required"
+msgstr "Permission requise"
+
+msgid "Phone"
+msgstr "Téléphone"
+
+msgid "Phone is required"
+msgstr "Le téléphone est requis"
+
+msgid "Please add at least one payment method with an opening amount."
+msgstr "Veuillez ajouter au moins un moyen de paiement avec un montant d'ouverture."
+
+msgid "Please enter a reason for cancellation."
+msgstr "Veuillez saisir un motif d'annulation."
+
+msgid "Please enter opening amounts for each payment method"
+msgstr "Veuillez saisir les montants d'ouverture pour chaque moyen de paiement"
+
+msgid "Please print invoice before making payment"
+msgstr "Veuillez imprimer la facture avant d'effectuer le paiement"
+
+msgid "Please select a customer before proceeding"
+msgstr "Veuillez sélectionner un client avant de continuer"
+
+msgid "Please select an aggregator before proceeding"
+msgstr "Veuillez sélectionner un agrégateur avant de continuer"
+
+msgid "Please select at least one payment method"
+msgstr "Veuillez sélectionner au moins un moyen de paiement"
+
+msgid "Please type to search..."
+msgstr "Tapez pour rechercher..."
+
+msgid "Please wait while we set things up"
+msgstr "Veuillez patienter pendant la configuration"
+
+msgid "Print"
+msgstr "Imprimer"
+
+msgid "Promise"
+msgstr "Promesse"
+
+msgid "QZ host is not set"
+msgstr "L'hôte QZ n'est pas défini"
+
+msgid "Quantity"
+msgstr "Quantité"
+
+msgid "Remaining"
+msgstr "Restant"
+
+msgid "Réessayer"
+msgstr "Réessayer"
+
+msgid "SIMULATION"
+msgstr "SIMULATION"
+
+msgid "Sales Summary"
+msgstr "Résumé des ventes"
+
+msgid "Search"
+msgstr "Rechercher"
+
+msgid "Search Input"
+msgstr "Champ de recherche"
+
+msgid "Search Menu"
+msgstr "Rechercher dans le menu"
+
+msgid "Search Orders"
+msgstr "Rechercher des commandes"
+
+msgid "Search customer"
+msgstr "Rechercher un client"
+
+msgid "Search customer..."
+msgstr "Rechercher un client..."
+
+msgid "Search menu items..."
+msgstr "Rechercher des articles..."
+
+msgid "Search orders, menu items, or customers..."
+msgstr "Rechercher commandes, articles ou clients..."
+
+msgid "Search..."
+msgstr "Rechercher..."
+
+msgid "Secondary"
+msgstr "Secondaire"
+
+msgid "Select"
+msgstr "Sélectionner"
+
+msgid "Select Table"
+msgstr "Sélectionner une table"
+
+msgid "Select an option"
+msgstr "Sélectionner une option"
+
+msgid "Select an order to view details"
+msgstr "Sélectionner une commande pour voir les détails"
+
+msgid "Select component with different states"
+msgstr "Composant de sélection avec différents états"
+
+msgid "Small"
+msgstr "Petit"
+
+msgid "Special Instructions"
+msgstr "Instructions spéciales"
+
+msgid "Status"
+msgstr "Statut"
+
+msgid "Status indicators and labels"
+msgstr "Indicateurs et étiquettes de statut"
+
+msgid "Stripe Terminal SDK loaded but StripeTerminal is not available after retries"
+msgstr "SDK Stripe Terminal chargé mais StripeTerminal non disponible après réessais"
+
+msgid "Stripe Terminal SDK loaded but neopay_integration.terminal is not available"
+msgstr "SDK Stripe Terminal chargé mais neopay_integration.terminal non disponible"
+
+msgid "Stripe Terminal SDK not available"
+msgstr "SDK Stripe Terminal non disponible"
+
+msgid "Subtotal"
+msgstr "Sous-total"
+
+msgid "Success"
+msgstr "Succès"
+
+msgid "Success Input"
+msgstr "Entrée réussie"
+
+msgid "Success state"
+msgstr "État de succès"
+
+msgid "Switch To Desk"
+msgstr "Passer au bureau"
+
+msgid "TWINT QR Code"
+msgstr "QR Code TWINT"
+
+msgid "Table"
+msgstr "Table"
+
+msgid "Taxes & Charges"
+msgstr "Taxes et frais"
+
+msgid "Terminal"
+msgstr "Terminal"
+
+msgid "Terminal ID is required to fetch connection token"
+msgstr "L'ID du terminal est requis pour récupérer le jeton de connexion"
+
+msgid "Terminal ID is required to initialize terminal"
+msgstr "L'ID du terminal est requis pour initialiser le terminal"
+
+msgid "Terminal ID is required when terminal is not initialized"
+msgstr "L'ID du terminal est requis lorsque le terminal n'est pas initialisé"
+
+msgid "Terminal not initialized"
+msgstr "Terminal non initialisé"
+
+msgid "Territory"
+msgstr "Territoire"
+
+msgid "This dialog demonstrates the usage of the Dialog component with header, content, and footer sections."
+msgstr "Ce dialogue démontre l'utilisation du composant Dialog avec sections d'en-tête, de contenu et de pied de page."
+
+msgid "Time"
+msgstr "Heure"
+
+msgid "Total"
+msgstr "Total"
+
+msgid "Total Amount"
+msgstr "Montant total"
+
+msgid "Total Entered"
+msgstr "Total saisi"
+
+msgid "Total difference"
+msgstr "Différence totale"
+
+msgid "Total&nbsp;"
+msgstr "Total&nbsp;"
+
+msgid "Traitement du paiement..."
+msgstr "Traitement du paiement..."
+
+msgid "Try adjusting your filters or search term"
+msgstr "Essayez d'ajuster vos filtres ou votre recherche"
+
+msgid "Try selecting a different category"
+msgstr "Essayez de sélectionner une catégorie différente"
+
+msgid "Type"
+msgstr "Type"
+
+msgid "UI Components Example"
+msgstr "Exemple de composants UI"
+
+msgid "URY POS"
+msgstr "URY POS"
+
+msgid "Use Simulated Terminal (Testing)"
+msgstr "Utiliser un terminal simulé (Test)"
+
+msgid "Use ↑↓ to navigate, Enter to select"
+msgstr "Utiliser ↑↓ pour naviguer, Entrée pour sélectionner"
+
+msgid "User menu"
+msgstr "Menu utilisateur"
+
+msgid "User not logged in"
+msgstr "Utilisateur non connecté"
+
+msgid "Variants"
+msgstr "Variantes"
+
+msgid "Veuillez présenter la carte au terminal"
+msgstr "Veuillez présenter la carte au terminal"
+
+msgid "Warning"
+msgstr "Avertissement"
+
+msgid "You do not have permission to access this application."
+msgstr "Vous n'avez pas la permission d'accéder à cette application."
+
+msgid "Your cart is empty"
+msgstr "Votre panier est vide"
+
+msgid "Échec du paiement"
+msgstr "Échec du paiement"
+
+msgid "État du Terminal"
+msgstr "État du Terminal"
+
+msgid "Êtes-vous sûr de vouloir annuler ce paiement ?"
+msgstr "Êtes-vous sûr de vouloir annuler ce paiement ?"
+
+msgid "⚠️"
+msgstr "⚠️"
+
+msgid "🔒"
+msgstr "🔒"
+
+msgid "🚀"
+msgstr "🚀"

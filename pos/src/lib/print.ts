@@ -7,6 +7,7 @@ import {
   updatePrintStatus,
   cloudprntPrint
 } from './invoice-api';
+import { __ } from './i18n';
 import { PosProfileCombined } from './pos-profile-api';
 
 interface PrintOrderParams {
@@ -15,20 +16,24 @@ interface PrintOrderParams {
 }
 
 export async function printOrder({ orderId, posProfile }: PrintOrderParams): Promise<'qz' | 'network' | 'socket' | 'cloudprnt'> {
+  console.log('[PRINT] printOrder called with:', { orderId, posProfile });
   const { print_type, qz_host, print_format, printer, name, cashier, multiple_cashier, cloudprnt_printer, cloudprnt_printer_name } = posProfile;
+  console.log('[PRINT] cloudprnt_printer:', cloudprnt_printer, 'cloudprnt_printer_name:', cloudprnt_printer_name);
 
   // Check CloudPRNT first (based on cloudprnt_printer flag)
   if (cloudprnt_printer && cloudprnt_printer_name) {
+    console.log('[PRINT] Using CloudPRNT with printer:', cloudprnt_printer_name);
     await cloudprntPrint(orderId, cloudprnt_printer_name);
     await updatePrintStatus(orderId);
     return 'cloudprnt';
   } else if (print_type === 'cloudprnt') {
+    console.log('[PRINT] Using CloudPRNT (print_type) with printer:', cloudprnt_printer_name);
     await cloudprntPrint(orderId, cloudprnt_printer_name);
     await updatePrintStatus(orderId);
     return 'cloudprnt';
   } else if (print_type === 'qz') {
     if (!qz_host) {
-      throw new Error('QZ host is not set');
+      throw new Error(__('QZ host is not set'));
     }
     const html = await getInvoicePrintHtml(orderId, print_format as string);
     await printWithQz(qz_host, html);

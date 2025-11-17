@@ -2,6 +2,7 @@ import React from 'react';
 import { ShoppingCart } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn, formatCurrency } from '../../lib/utils';
+import { __ } from '../../lib/i18n';
 
 interface FloatingCartButtonProps {
   itemCount: number;
@@ -54,7 +55,7 @@ export function FloatingCartButton({
 
           {/* Total Amount */}
           <div className="flex flex-col items-start">
-            <span className="text-xs opacity-90">Total</span>
+            <span className="text-xs opacity-90">{__('Total')}</span>
             <span className="text-base font-bold">{formatCurrency(total)}</span>
           </div>
 

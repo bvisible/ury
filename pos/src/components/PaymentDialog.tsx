@@ -20,7 +20,7 @@ interface PaymentDialogProps {
   table: string | null;
   cashier: string;
   owner: string;
-  fetchOrders: () => Promise<void>;
+  fetchOrders: () =>Promise<void>;
   clearSelectedOrder: () => void;
 }
 
@@ -304,7 +304,7 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
 
       // Show toast and reload orders (assume showToast and reload available globally)
       if (typeof window !== 'undefined' && (window as any).showToast) {
-        (window as any).showToast.success('Payment successful');
+        (window as any).showToast.success(__('Payment successful'));
       }
       onClose();
       clearSelectedOrder();
@@ -356,7 +356,7 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
         {/* Left Column - Discount and Payment Mode */}
         <div className="md:w-1/2 p-6 border-b md:border-b-0 md:border-r border-gray-200 overflow-y-auto">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Payment</h2>
+            <h2 className="text-2xl font-bold text-gray-900">{__('Payment')}</h2>
             <Button
               onClick={onClose}
               variant="ghost"
@@ -372,7 +372,7 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
             <div className="space-y-4 mb-6">
               <h3 className="text-lg font-semibold flex items-center gap-2">
                 <Percent className="w-5 h-5" />
-                Apply Discount
+                {__('Apply Discount')}
               </h3>
               <div className="flex gap-2">
                 <Input
@@ -388,7 +388,7 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
                   variant="default"
                   size="sm"
                 >
-                  Apply
+                  {__('Apply')}
                 </Button>
               </div>
             </div>
@@ -396,7 +396,7 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
 
           {/* Payment Methods Section - Split Payment */}
           <div className="space-y-4 mb-6">
-            <h3 className="text-lg font-semibold">Payment Methods</h3>
+            <h3 className="text-lg font-semibold">{__('Payment Methods')}</h3>
             <div className="grid grid-cols-1 gap-3">
               {paymentModes.map((mode: any) => {
                 const id = typeof mode === 'string' ? mode : mode.id;
@@ -443,7 +443,7 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
                       >
                         {isStripeMode && <CreditCard className="h-4 w-4" />}
                         {isTwintMode && <Smartphone className="h-4 w-4" />}
-                        {__('Pay with')} {isStripeMode ? 'Terminal' : 'TWINT'}
+                        {__('Pay with')} {isStripeMode ? __('Terminal') : __('TWINT')}
                       </Button>
                     )}
                   </div>
@@ -451,7 +451,7 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
               })}
             </div>
             <div className="flex justify-between mt-2 text-sm">
-              <span className="font-medium">Total Entered</span>
+              <span className="font-medium">{__('Total Entered')}</span>
               <span className={'text-green-600 font-semibold flex items-center gap-1'}>
                 {formatCurrency(paymentsTotal)} / {formatCurrency(finalTotal)}
                 {paymentsTotal > finalTotal && (
@@ -476,31 +476,31 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
 
           {/* Order Summary */}
           <div className="space-y-3 mb-6">
-            <h3 className="text-lg font-semibold">Order Summary</h3>
+            <h3 className="text-lg font-semibold">{__('Order Summary')}</h3>
             <div className="space-y-2 text-sm">
               {/* Subtotal (Grand Total) */}
               <div className="flex justify-between">
-                <span className="text-gray-600">Subtotal</span>
+                <span className="text-gray-600">{__('Subtotal')}</span>
                 <span>{formatCurrency(subtotal)}</span>
               </div>
               {/* Discount */}
               {appliedDiscount > 0 && (
                 <div className="flex justify-between text-green-600">
-                  <span>Discount</span>
+                  <span>{__('Discount')}</span>
                   <span>-{formatCurrency(appliedDiscount)}</span>
                 </div>
               )}
               {/* Adjustment (if any) */}
               {showFinalAdjustment && (
                 <div className="flex justify-between text-blue-600">
-                  <span>Adjustment</span>
+                  <span>{__('Adjustment')}</span>
                   <span>{roundedFinalAdjustment > 0 ? '+' : ''}{formatCurrency(roundedFinalAdjustment)}</span>
                 </div>
               )}
               {/* Final Total (Rounded) */}
               <div className="border-t pt-2">
                 <div className="flex justify-between font-semibold text-lg">
-                  <span>Total</span>
+                  <span>{__('Total')}</span>
                   <span>{formatCurrency(finalTotal)}</span>
                 </div>
               </div>
@@ -514,7 +514,7 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({
             variant={isProcessing || payments.length === 0 || paymentsTotal < finalTotal ? "secondary" : "default"}
             className="w-full"
           >
-            {isProcessing ? 'Processing...' : `Pay ${formatCurrency(paymentsTotal>0?paymentsTotal:finalTotal)}`}
+            {isProcessing ? __('Processing...') : `${__('Pay')} ${formatCurrency(paymentsTotal>0?paymentsTotal:finalTotal)}`}
           </Button>
         </div>
       </DialogContent>

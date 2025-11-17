@@ -3,6 +3,7 @@ import { AlertCircle, Loader2 } from 'lucide-react';
 import { Button, Input } from './ui';
 import { createPOSOpeningEntry, BalanceDetail } from '../lib/pos-opening-api';
 import { getPaymentModes } from '../lib/payment-api';
+import { __ } from '../lib/i18n';
 
 interface POSOpeningFormDialogProps {
   company: string;
@@ -199,7 +200,7 @@ const POSOpeningFormDialog: React.FC<POSOpeningFormDialogProps> = ({
                               value={row.opening_amount}
                               onChange={(e) => handleAmountChange(index, e.target.value)}
                               className="w-full"
-                              placeholder="0.00"
+                              placeholder={__('0.00')}
                             />
                           </td>
                         </tr>

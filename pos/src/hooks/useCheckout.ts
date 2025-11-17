@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { usePOSStore } from '../store/pos-store';
 import { db, call } from '../lib/frappe-sdk';
+import { __ } from '../lib/i18n';
 
 interface Payment {
   mode_of_payment: string;
@@ -61,7 +62,7 @@ export function useCheckout() {
 
       // Validate payments
       if (payments.length === 0) {
-        throw new Error('Please select at least one payment method');
+        throw new Error(__('Please select at least one payment method'));
       }
 
       const totalPayment = payments.reduce((sum, p) => sum + p.amount, 0);
@@ -75,7 +76,7 @@ export function useCheckout() {
       const finalTotal = orderTotal - discountAmount;
 
       if (totalPayment < finalTotal) {
-        throw new Error('Payment amount is less than order total');
+        throw new Error(__('Payment amount is less than order total'));
       }
 
       // Get current user

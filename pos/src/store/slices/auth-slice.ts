@@ -1,5 +1,6 @@
 import { StateCreator } from 'zustand';
 import { getLoggedUser, getUserRoles } from '../../lib/auth-api';
+import { __ } from '../lib/i18n';
 
 export interface User {
   name: string; // This stores the user ID
@@ -14,7 +15,7 @@ export interface AuthState {
 }
 
 export interface AuthActions {
-  checkAuth: () => Promise<void>;
+  checkAuth: () =>Promise<void>;
   setUser: (user: User | null) => void;
   clearAuth: () => void;
 }

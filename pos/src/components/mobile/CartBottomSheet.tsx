@@ -10,6 +10,7 @@ import { usePOSStore } from '../../store/pos-store';
 import OrderTypeSelect from '../OrderTypeSelect';
 import { CustomerSelect } from '../CustomerSelect';
 import { syncOrder } from '../../lib/order-api';
+import { __ } from '../../lib/i18n';
 
 interface CartBottomSheetProps {
   isOpen: boolean;
@@ -114,7 +115,7 @@ export function CartBottomSheet({
     removeFromOrder(uniqueId);
   };
 
-  // Handle "Add New Order" - Save as Draft
+  // Handle __("Add New Order") - Save as Draft
   const handleAddNewOrder = async () => {
     if (!posProfile) {
       toast.error('POS Profile not loaded');
@@ -217,8 +218,8 @@ export function CartBottomSheet({
             <div className="flex-1 min-h-0 overflow-y-auto px-4 py-2">
               {items.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-gray-400">
-                  <p className="text-lg font-medium">Your cart is empty</p>
-                  <p className="text-sm mt-1">Add items to get started</p>
+                  <p className="text-lg font-medium">{__('Your cart is empty')}</p>
+                  <p className="text-sm mt-1">{__('Add items to get started')}</p>
                 </div>
               ) : (
                 <AnimatePresence mode="popLayout">
@@ -241,7 +242,7 @@ export function CartBottomSheet({
             <div className="flex-shrink-0 border-t border-gray-200 p-4 bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
                 {/* Total */}
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-lg font-semibold text-gray-900">Total</span>
+                  <span className="text-lg font-semibold text-gray-900">{__('Total')}</span>
                   <span className="text-xl font-bold text-primary-600">
                     {formatCurrency(total)}
                   </span>
@@ -256,7 +257,7 @@ export function CartBottomSheet({
                     variant="outline"
                     className="flex-1 h-12 text-base font-semibold"
                   >
-                    {isSaving ? 'Saving...' : 'Add New Order'}
+                    {isSaving ? __('Saving...') : __('Add New Order')}
                   </Button>
 
                   {/* Checkout Button - Direct Payment */}

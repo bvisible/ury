@@ -512,7 +512,7 @@ const StripeTerminalDialog: React.FC<StripeTerminalDialogProps> = ({
                             <div className="text-sm text-gray-500">
                               {reader.device_type}
                               {reader.serial_number && ` • ${reader.serial_number}`}
-                              {simulationMode && <span className="ml-2 px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs rounded">SIMULATION</span>}
+                              {simulationMode && <span className="ml-2 px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs rounded">{__('SIMULATION')}</span>}
                             </div>
                             {reader.ip_address && (
                               <div className="text-xs text-gray-400 mt-1">
@@ -622,7 +622,7 @@ const StripeTerminalDialog: React.FC<StripeTerminalDialogProps> = ({
               )}
               {selectedTerminal && (
                 <p className="text-xs text-gray-400 mt-3">
-                  {__('Terminal')}: {selectedTerminal.label}
+                  {__(__('Terminal'))}: {selectedTerminal.label}
                 </p>
               )}
 
@@ -711,7 +711,7 @@ const StripeTerminalDialog: React.FC<StripeTerminalDialogProps> = ({
               <p className="text-gray-700 max-w-md mx-auto">{error}</p>
               {selectedTerminal && (
                 <p className="text-xs text-gray-400 mt-3">
-                  {__('Terminal')}: {selectedTerminal.label}
+                  {__(__('Terminal'))}: {selectedTerminal.label}
                 </p>
               )}
               <div className="flex gap-3 mt-6 justify-center">

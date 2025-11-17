@@ -6,6 +6,7 @@ import { cn, formatCurrency } from '../../lib/utils';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { usePOSStore } from '../../store/pos-store';
+import { __ } from '../../lib/i18n';
 
 interface PaymentMethodSheetProps {
   isOpen: boolean;
@@ -96,7 +97,7 @@ export function PaymentMethodSheet({
               >
                 <ChevronLeft className="w-5 h-5 text-gray-500" />
               </button>
-              <h2 className="text-lg font-semibold text-gray-900">Payment</h2>
+              <h2 className="text-lg font-semibold text-gray-900">{__('Payment')}</h2>
             </div>
             <button
               onClick={onClose}
@@ -111,7 +112,7 @@ export function PaymentMethodSheet({
           {/* Total Amount Display */}
           <div className="flex-shrink-0 px-4 py-4 bg-gray-50 border-b border-gray-200">
             <div className="text-center">
-              <p className="text-sm text-gray-600 mb-1">Total Amount</p>
+              <p className="text-sm text-gray-600 mb-1">{__('Total Amount')}</p>
               <p className="text-3xl font-bold text-gray-900">{formatCurrency(totalAmount)}</p>
             </div>
           </div>
@@ -189,7 +190,7 @@ export function PaymentMethodSheet({
                           step="0.01"
                           value={splitPayments[method] || ''}
                           onChange={(e) => handleSplitPaymentChange(method, e.target.value)}
-                          placeholder="0.00"
+                          placeholder={__('0.00')}
                           className="w-full"
                         />
                       </div>
@@ -201,13 +202,13 @@ export function PaymentMethodSheet({
                 {Object.keys(splitPayments).length > 0 && (
                   <div className="mt-6 p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-gray-600">Paid</span>
+                      <span className="text-sm text-gray-600">{__('Paid')}</span>
                       <span className="text-sm font-medium text-gray-900">
                         {formatCurrency(calculateSplitTotal())}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold text-gray-700">Remaining</span>
+                      <span className="text-sm font-semibold text-gray-700">{__('Remaining')}</span>
                       <span className={cn(
                         'text-lg font-bold',
                         remainingBalance > 0 ? 'text-red-600' : 'text-green-600'
@@ -217,7 +218,7 @@ export function PaymentMethodSheet({
                     </div>
                     {remainingBalance < 0 && (
                       <p className="text-xs text-green-600 mt-2">
-                        Change: {formatCurrency(Math.abs(remainingBalance))}
+                        {__('Change')}: {formatCurrency(Math.abs(remainingBalance))}
                       </p>
                     )}
                   </div>

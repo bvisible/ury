@@ -15,6 +15,7 @@ import { printOrder } from '../lib/print';
 import { call } from '../lib/frappe-sdk';
 import { useIsMobile } from '../hooks/useMediaQuery';
 import { MobileOrders } from './mobile/MobileOrders';
+import { __ } from '../lib/i18n';
 
 export default function Orders() {
   const isMobile = useIsMobile();
@@ -100,7 +101,7 @@ export default function Orders() {
   async function handleCancelOrder() {
     if (!selectedOrder) return;
     if (!cancelReason.trim()) {
-      showToast.error('Please enter a reason for cancellation.');
+      showToast.error(__('Please enter a reason for cancellation.'));
       return;
     }
     setCancelLoading(true);
@@ -109,7 +110,7 @@ export default function Orders() {
         invoice_id: selectedOrder.name,
         reason: cancelReason
       })
-      showToast.success('Order cancelled successfully');
+      showToast.success(__('Order cancelled successfully'));
       setCancelDialogOpen(false);
       setCancelReason('');
       clearSelectedOrder();
@@ -126,7 +127,7 @@ export default function Orders() {
     setEditLoading(true);
     try {
       const res = await fetch(`/api/method/frappe.client.get?doctype=POS+Invoice&name=${selectedOrder.name}`);
-      if (!res.ok) throw new Error('Failed to fetch order details');
+      if (!res.ok) throw new Error(__('Failed to fetch order details'));
       const data = await res.json();
       const order = data.message;
       // Fill POS store
@@ -181,7 +182,7 @@ export default function Orders() {
       }
       // If order was Unbilled, set to Draft and reload draft orders
       if (selectedStatus === 'Unbilled') {
-        showToast.info('Order moved to Draft after printing.');
+        showToast.info(__('Order moved to Draft after printing.'));
         setSelectedStatus('Draft');
         fetchOrders();
       }
@@ -196,7 +197,7 @@ export default function Orders() {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
-          <p className="text-xl font-semibold text-red-600 mb-2">Failed to load orders</p>
+          <p className="text-xl font-semibold text-red-600 mb-2">{__('Failed to load orders')}</p>
           <p className="text-gray-600">{error}</p>
         </div>
       </div>
@@ -226,7 +227,7 @@ export default function Orders() {
             </div>
           ) : orders.length === 0 ? (
             <div className="text-center mt-10">
-              <p className="text-gray-500">No orders found</p>
+              <p className="text-gray-500">{__('No orders found')}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-screen-xl mx-auto">
@@ -315,8 +316,8 @@ export default function Orders() {
       <div className="w-96 bg-white border-l border-gray-200 flex flex-col h-[calc(100vh-4rem)] fixed right-0 z-10">
         {!selectedOrder ? (
           <div className="text-center h-full flex flex-col items-center justify-center text-gray-500 p-6">
-            <p className="text-lg font-medium mb-2">Select an order to view details</p>
-            <p className="text-sm">Click on any order card to view its details</p>
+            <p className="text-lg font-medium mb-2">{__('Select an order to view details')}</p>
+            <p className="text-sm">{__('Click on any order card to view its details')}</p>
           </div>
         ) : selectedOrderLoading ? (
           <div className="flex items-center justify-center h-full">
@@ -324,7 +325,7 @@ export default function Orders() {
           </div>
         ) : selectedOrderError ? (
           <div className="text-center h-full flex flex-col items-center justify-center text-red-500 p-6">
-            <p className="text-lg font-medium mb-2">Failed to load order details</p>
+            <p className="text-lg font-medium mb-2">{__('Failed to load order details')}</p>
             <p className="text-sm">{selectedOrderError}</p>
           </div>
         ) : (
@@ -339,17 +340,17 @@ export default function Orders() {
                     <button
                       type="button"
                       className="inline-flex items-center justify-center rounded-md p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      aria-label="Edit order"
+                      aria-label={__('Edit order')}
                       onClick={handleEditOrder}
                       disabled={editLoading}
                     >
                       <Pencil className="w-4 h-4" />
-                      {editLoading && <span className="ml-2 text-xs">Loading...</span>}
+                      {editLoading && <span className="ml-2 text-xs">{__(__('Loading...'))}</span>}
                     </button>
                     <button
                       type="button"
                       className="inline-flex items-center justify-center rounded-md p-2 bg-gray-100 hover:bg-gray-200 text-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
-                      aria-label="Cancel order"
+                      aria-label={__('Cancel order')}
                       onClick={() => setCancelDialogOpen(true)}
                     >
                       <X className="w-4 h-4" />
@@ -365,14 +366,14 @@ export default function Orders() {
             <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Cancel Order</DialogTitle>
+                  <DialogTitle>{__('Cancel Order')}</DialogTitle>
                   <DialogDescription>
                     Please provide a reason for cancelling this order.
                   </DialogDescription>
                 </DialogHeader>
                 <div className="px-6 mb-3">
                 <Textarea
-                  placeholder="Enter cancel reason"
+                  placeholder={__('Enter cancel reason')}
                   value={cancelReason}
                   onChange={e => setCancelReason(e.target.value)}
                   disabled={cancelLoading}
@@ -384,7 +385,7 @@ export default function Orders() {
                     Close
                   </Button>
                   <Button variant="danger" onClick={handleCancelOrder} disabled={cancelLoading}>
-                    {cancelLoading ? 'Cancelling...' : 'Confirm Cancel'}
+                    {cancelLoading ? __('Cancelling...') : __('Confirm Cancel')}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -424,7 +425,7 @@ export default function Orders() {
 
               {/* Order Items */}
               <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Order Items</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">{__('Order Items')}</h3>
                 <div className="space-y-3">
                   {selectedOrderItems.map((item, index) => (
                     <div key={index} className="flex justify-between items-start py-2 border-b border-gray-100">
@@ -445,7 +446,7 @@ export default function Orders() {
               {/* Taxes */}
               {selectedOrderTaxes.length > 0 && (
                 <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Taxes & Charges</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">{__('Taxes & Charges')}</h3>
                   <div className="space-y-2">
                     {selectedOrderTaxes.map((tax, index) => (
                       <div key={index} className="flex justify-between items-center py-1">
@@ -469,7 +470,7 @@ export default function Orders() {
                   size="icon"
                   className="flex-shrink-0"
                   onClick={handlePrintOrder}
-                  aria-label="Print"
+                  aria-label={__(__('Print'))}
                   disabled={isPrinting}
                 >
                   {isPrinting ? <Spinner className="w-5 h-5" hideMessage /> : <Printer className="w-5 h-5" />}
@@ -480,13 +481,13 @@ export default function Orders() {
                     className="flex-1"
                     onClick={() => {
                       if (String(selectedOrder.invoice_printed) === '0') {
-                        showToast.error('Please print invoice before making payment');
+                        showToast.error(__('Please print invoice before making payment'));
                         return;
                       }
                       setShowPaymentDialog(true);
                     }}
                   >
-                    Payment
+                    {__('Payment')}
                   </Button>
                 )}
                 {/* Total */}

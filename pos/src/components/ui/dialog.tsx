@@ -2,6 +2,7 @@ import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "../../lib/utils"
 import { X } from "lucide-react"
+import { __ } from '../../lib/i18n';
 
 const dialogVariants = cva(
   "fixed inset-0 z-[99999] flex items-center justify-center",
@@ -112,7 +113,7 @@ const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
           className="absolute top-4 right-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
         >
           <X className="h-4 w-4" />
-          <span className="sr-only">Close</span>
+          <span className="sr-only">{__('Close')}</span>
         </button>
       )}
       {children}

@@ -147,7 +147,7 @@ const PaymentAmountDialog: React.FC<PaymentAmountDialogProps> = ({
               value={amount.toFixed(2)}
               onChange={handleInputChange}
               className="w-full text-4xl font-bold text-gray-900 font-mono bg-transparent border-none focus:outline-none focus:ring-0 p-0"
-              placeholder="0.00"
+              placeholder={__('0.00')}
             />
             <div className="text-sm text-gray-500 mt-2">
               {__('Amount due (for info)')}: {formatCurrency(maxAmount, currency)}

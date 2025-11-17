@@ -1,4 +1,5 @@
 import { call } from './frappe-sdk';
+import { __ } from '../lib/i18n';
 
 // Stripe Terminal SDK types
 interface StripeTerminalSDK {
@@ -6,7 +7,7 @@ interface StripeTerminalSDK {
 }
 
 interface TerminalOptions {
-  onFetchConnectionToken: () => Promise<string>;
+  onFetchConnectionToken: () =>Promise<string>;
   onUnexpectedReaderDisconnect?: () => void;
   onConnectionStatusChange?: (event: ConnectionStatusEvent) => void;
 }
@@ -16,15 +17,15 @@ interface ConnectionStatusEvent {
 }
 
 interface Terminal {
-  discoverReaders: (config: DiscoverConfig) => Promise<DiscoverResult>;
-  connectReader: (reader: Reader, options?: ConnectReaderOptions) => Promise<Reader>;
-  disconnectReader: () => Promise<void>;
-  collectPaymentMethod: (clientSecret: string, options?: CollectPaymentMethodOptions) => Promise<CollectPaymentMethodResult>;
-  processPayment: (paymentIntent: PaymentIntent) => Promise<ProcessPaymentResult>;
-  cancelCollectPaymentMethod: () => Promise<void>;
+  discoverReaders: (config: DiscoverConfig) =>Promise<DiscoverResult>;
+  connectReader: (reader: Reader, options?: ConnectReaderOptions) =>Promise<Reader>;
+  disconnectReader: () =>Promise<void>;
+  collectPaymentMethod: (clientSecret: string, options?: CollectPaymentMethodOptions) =>Promise<CollectPaymentMethodResult>;
+  processPayment: (paymentIntent: PaymentIntent) =>Promise<ProcessPaymentResult>;
+  cancelCollectPaymentMethod: () =>Promise<void>;
   setSimulatorConfiguration: (config: SimulatorConfig) => void;
-  clearReaderDisplay: () => Promise<void>;
-  setReaderDisplay: (display: ReaderDisplay) => Promise<void>;
+  clearReaderDisplay: () =>Promise<void>;
+  setReaderDisplay: (display: ReaderDisplay) =>Promise<void>;
   getConnectionStatus: () => string;
   getConnectedReader: () => Reader | null;
 }
@@ -248,7 +249,7 @@ export const init = async (): Promise<boolean> => {
       }
     }
 
-    throw new Error('Stripe Terminal SDK loaded but StripeTerminal is not available after retries');
+    throw new Error(__('Stripe Terminal SDK loaded but StripeTerminal is not available after retries'));
   } catch (error) {
     console.error('[StripeTerminalBridge] Initialization error:', error);
     state.lastError = error instanceof Error ? error.message : 'Unknown error';
@@ -265,7 +266,7 @@ const fetchConnectionToken = async (terminalId: string): Promise<string> => {
     console.log('[StripeTerminalBridge] Fetching connection token for terminal:', terminalId);
 
     if (!terminalId) {
-      throw new Error('Terminal ID is required to fetch connection token');
+      throw new Error(__('Terminal ID is required to fetch connection token'));
     }
 
     const response = await call.post('neopay_integration.api.get_connection_token', {
@@ -273,7 +274,7 @@ const fetchConnectionToken = async (terminalId: string): Promise<string> => {
     });
 
     if (!response.message) {
-      throw new Error('No connection token received from server');
+      throw new Error(__('No connection token received from server'));
     }
 
     console.log('[StripeTerminalBridge] Connection token received');
@@ -292,7 +293,7 @@ const fetchConnectionToken = async (terminalId: string): Promise<string> => {
 export const initializeTerminal = async (terminalId: string): Promise<Terminal> => {
   try {
     if (!terminalId) {
-      throw new Error('Terminal ID is required to initialize terminal');
+      throw new Error(__('Terminal ID is required to initialize terminal'));
     }
 
     transitionTo('initializing');
@@ -301,7 +302,7 @@ export const initializeTerminal = async (terminalId: string): Promise<Terminal> 
     await init();
 
     if (!window.StripeTerminal) {
-      throw new Error('Stripe Terminal SDK not available');
+      throw new Error(__('Stripe Terminal SDK not available'));
     }
 
     console.log('[StripeTerminalBridge] Creating Terminal instance for:', terminalId);
@@ -350,13 +351,13 @@ export const discoverReaders = async (
   try {
     if (!state.terminal) {
       if (!terminalId) {
-        throw new Error('Terminal ID is required when terminal is not initialized');
+        throw new Error(__('Terminal ID is required when terminal is not initialized'));
       }
       await initializeTerminal(terminalId);
     }
 
     if (!state.terminal) {
-      throw new Error('Terminal not initialized');
+      throw new Error(__('Terminal not initialized'));
     }
 
     transitionTo('discovering');
@@ -418,7 +419,7 @@ export const discoverReaders = async (
 export const connectToReader = async (reader: Reader): Promise<Reader> => {
   try {
     if (!state.terminal) {
-      throw new Error('Terminal not initialized');
+      throw new Error(__('Terminal not initialized'));
     }
 
     transitionTo('connecting');
@@ -516,7 +517,7 @@ export const updateLineItems = async (
 ): Promise<void> => {
   try {
     if (!state.terminal) {
-      throw new Error('Terminal not initialized');
+      throw new Error(__('Terminal not initialized'));
     }
 
     console.log('[StripeTerminalBridge] Updating line items on terminal...');
@@ -571,12 +572,12 @@ export const processPayment = async (clientSecret: string): Promise<PaymentInten
   try {
     if (!state.terminal) {
       console.error('[STRIPE-PAYMENT] ❌ Terminal not initialized');
-      throw new Error('Terminal not initialized');
+      throw new Error(__('Terminal not initialized'));
     }
 
     if (!state.connectedReader) {
       console.error('[STRIPE-PAYMENT] ❌ No reader connected');
-      throw new Error('No reader connected');
+      throw new Error(__('No reader connected'));
     }
 
     transitionTo('processing');
@@ -639,7 +640,7 @@ export const processPayment = async (clientSecret: string): Promise<PaymentInten
       console.warn('[STRIPE-PAYMENT] ⚠️ Payment method collection was cancelled');
       state.isProcessing = false;
       transitionTo('connected');
-      throw new Error('Payment collection was cancelled');
+      throw new Error(__('Payment collection was cancelled'));
     }
 
     console.log('[STRIPE-PAYMENT] ✅ Payment method collected', {
