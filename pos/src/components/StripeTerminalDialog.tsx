@@ -88,6 +88,19 @@ const StripeTerminalDialog: React.FC<StripeTerminalDialogProps> = ({
     }
   }, [dialogState, simulationMode]);
 
+  // Cleanup: Disconnect terminal when dialog closes
+  useEffect(() => {
+    return () => {
+      // Only disconnect when dialog actually closes (not just state changes)
+      if (!isOpen && StripeBridge.isConnected()) {
+        console.log('[STRIPE-UI] 🔌 Dialog closing - disconnecting terminal...');
+        StripeBridge.disconnectReader().catch(err => {
+          console.error('[STRIPE-UI] ⚠️ Failed to disconnect on cleanup:', err);
+        });
+      }
+    };
+  }, [isOpen]);
+
   /**
    * Load available terminals using Stripe Terminal SDK
    * Flow:
@@ -243,10 +256,24 @@ const StripeTerminalDialog: React.FC<StripeTerminalDialogProps> = ({
     setError(null);
 
     try {
-      // Step 1 & 2: Connect to terminal
-      console.log('[STRIPE-UI] 🔌 Connecting to terminal:', selectedTerminal.label);
-      await StripeBridge.connectToReader(selectedTerminal);
-      console.log('[STRIPE-UI] ✅ Terminal connected');
+      // Step 1 & 2: Connect to terminal (smart reconnect)
+      const currentReader = StripeBridge.getConnectedReader();
+      const isAlreadyConnected = StripeBridge.isConnected() &&
+                                 currentReader?.id === selectedTerminal.id;
+
+      if (isAlreadyConnected) {
+        console.log('[STRIPE-UI] ♻️ Already connected to terminal, reusing connection:', selectedTerminal.label);
+      } else {
+        // If connected to different reader, disconnect first
+        if (StripeBridge.isConnected()) {
+          console.log('[STRIPE-UI] 🔌 Disconnecting from previous terminal...');
+          await StripeBridge.disconnectReader();
+        }
+
+        console.log('[STRIPE-UI] 🔌 Connecting to terminal:', selectedTerminal.label);
+        await StripeBridge.connectToReader(selectedTerminal);
+        console.log('[STRIPE-UI] ✅ Terminal connected');
+      }
 
       // Step 3: Configure simulator if in simulation mode
       if (simulationMode && selectedTerminal.device_type === 'simulated') {
