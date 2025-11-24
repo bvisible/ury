@@ -131,9 +131,10 @@ def process_items_for_kot(
             item_group = frappe.db.get_value("Item", item["item_code"], "item_group")
             item_code = item["item_code"]
             if item_group not in all_production_item_groups:
-                frappe.msgprint(
-                    f"Item group '{item_group}' for item '{item_code}' is not in any production."
-                )
+                #frappe.msgprint(
+                #    f"Item group '{item_group}' for item '{item_code}' is not in any production."
+                #)
+                pass
         for production in productions:
             productionItemGroupslist = frappe.get_all(
                 "URY Production Item Groups",
