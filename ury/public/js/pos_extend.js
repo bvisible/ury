@@ -1,4 +1,4 @@
-frappe.provide("erpnext.PointOfSale");
+/*frappe.provide("erpnext.PointOfSale");
 frappe.pages["point-of-sale"].on_page_load = function (wrapper) {
   frappe.ui.make_app_page({
     parent: wrapper,
@@ -383,3 +383,4 @@ frappe.pages["point-of-sale"].on_page_load = function (wrapper) {
     window.cur_pos = wrapper.pos;
   });
 };
+*/

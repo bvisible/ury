@@ -33,7 +33,7 @@ app_include_js = [
 # webform_include_css = {"doctype": "public/css/doctype.css"}
 
 # include js in page
-page_js = {"point-of-sale": ["public/js/pos_extend.js"]}
+# page_js = {"point-of-sale": ["public/js/pos_extend.js"]}
 
 # include js in doctype views
 # doctype_js = {"POS Invoive" : "public/js/pos_print.js"}
@@ -134,7 +134,7 @@ doc_events = {
         "before_insert": "ury.ury.hooks.ury_sales_invoice.before_insert",
         "on_update":"ury.ury.hooks.ury_sales_invoice.on_update",
         },
-    "Customer": {"before_save": "ury.ury.hooks.ury_customer.before_insert"},
+    #"Customer": {"before_save": "ury.ury.hooks.ury_customer.before_insert"},
     "Item": {"validate": "ury.ury.hooks.ury_item.validate"},
     "POS Opening Entry": {
         "validate":"ury.ury.hooks.ury_pos_opening_entry.set_cashier_room",
