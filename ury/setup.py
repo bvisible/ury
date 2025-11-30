@@ -32,7 +32,7 @@ def get_custom_fields():
 				{
 					"fieldname": "order_type",
 					"fieldtype": "Select",
-					"default": "Dine In",
+					"default": "",
 					"label": "Order Type",
 					"options": "\nDine In\nTake Away\nDelivery\nPhone In\nAggregators",
 					"insert_after": "order_info",
@@ -149,7 +149,7 @@ def get_custom_fields():
 				{
 					"fieldname": "order_type",
 					"fieldtype": "Select",
-					"default": "Dine In",
+					"default": "",
 					"options": "URY Restaurant",
 					"fetch_from": "customer.mobile_number",
 					"label": "Order Type",
